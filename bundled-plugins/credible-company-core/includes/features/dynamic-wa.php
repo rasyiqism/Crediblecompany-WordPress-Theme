@@ -68,6 +68,7 @@ function cc_track_marketing_referral() {
  * @param string $original_url URL href yang sudah ada di panel (misal dari Customizer yg dilimit).
  * @return string URL utuh yang sudah berpotensi terganti nomornya.
  */
+if ( ! function_exists( 'cc_dynamic_wa_url' ) ) {
 function cc_dynamic_wa_url( $original_url ) {
     // 1. Cek dulu apakah pengunjung punya data referral
     if ( ! isset( $_COOKIE[ CC_MARKETER_COOKIE ] ) || empty( $_COOKIE[ CC_MARKETER_COOKIE ] ) ) {
@@ -110,7 +111,7 @@ function cc_dynamic_wa_url( $original_url ) {
     } 
     // Jika tidak diisi custom text agen, dan ternyata tombol dari Elementor emang ga ada param text-nya
     elseif ( ! isset( $query_array['text'] ) || empty( $query_array['text'] ) ) {
-         $query_array['text'] = 'Halo {Nama Marketing}, saya tertarik dengan layanan Anda .... Note: Transaksi HANYA di rekening atas nama:- Sutrisno (BSI - 7145671967), - Ahmad Fathur Rozaq (BSI - 7187174923).';
+         $query_array['text'] = cc_get( 'whatsapp_message', cc_get_default_wa_message() );
     }
     
     // String Replace: Jika teks berisi {Nama Marketing}, ganti dengan nama aslinya
@@ -123,6 +124,7 @@ function cc_dynamic_wa_url( $original_url ) {
     $new_url = 'https://wa.me/' . $marketing_wa . '?' . $query_string;
 
     return $new_url;
+}
 }
 
 /* --------------------------------------------------------------------------
@@ -137,9 +139,10 @@ function cc_dynamic_wa_url( $original_url ) {
  * @param string $text Teks yang akan dicetak ke layar
  * @return string Teks yang sudah difilter
  */
+if ( ! function_exists( 'cc_dynamic_text' ) ) {
 function cc_dynamic_text( $text ) {
-    // Daftar template tag yang akan diganti
-    $placeholders = array( '{Nama Marketing}', '{nama marketing}', ' {Nama Marketing}', ' {nama marketing}' );
+    // Daftar template tag — varian dengan spasi depan diletakkan lebih dulu agar tidak terlewat
+    $placeholders = array( ' {Nama Marketing}', ' {nama marketing}', '{Nama Marketing}', '{nama marketing}' );
 
     if ( ! isset( $_COOKIE[ CC_MARKETER_COOKIE ] ) || empty( $_COOKIE[ CC_MARKETER_COOKIE ] ) ) {
         $fallback = get_theme_mod( 'cc_marketing_fallback_name', 'Admin' );
@@ -155,4 +158,5 @@ function cc_dynamic_text( $text ) {
     }
 
     return str_replace( $placeholders, $marketing_name, $text );
+}
 }

@@ -9,7 +9,7 @@
 add_action( 'customize_register', function ( $wp_customize ) {
     // Panel 1: Konfigurasi Global
     $wp_customize->add_panel( 'cc_global_panel', array(
-        'title'    => __( 'Konfigurasi Dasar & SEO', 'crediblecompany' ),
+        'title'    => __( 'Konfigurasi Global', 'crediblecompany' ),
         'priority' => 25,
     ) );
 

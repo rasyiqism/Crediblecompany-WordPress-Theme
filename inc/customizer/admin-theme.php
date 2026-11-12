@@ -13,12 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_action( 'customize_register', function( $wp_customize ) {
 
-    // 1. Tambahkan Section Kustomisasi Admin di dalam Panel Global
+    // 1. Tambahkan Section Keamanan & Tampilan Admin di dalam Panel Global
     $wp_customize->add_section( 'cc_admin_theme_section', array(
-        'title'       => __( 'Kustomisasi Admin & Login', 'crediblecompany' ),
-        'description' => __( 'Otomatiskan tampilan halaman login dan dashboard admin (WP Admin) menggunakan warna general template dan logo kustom situs Anda.', 'crediblecompany' ),
+        'title'       => __( 'Keamanan & Tampilan Admin', 'crediblecompany' ),
+        'description' => __( 'Atur keamanan URL login dan kustomisasi halaman login serta dashboard admin (WP Admin).', 'crediblecompany' ),
         'panel'       => 'cc_global_panel',
-        'priority'    => 40,
+        'priority'    => 70,
     ) );
 
     // 2. Setting: Aktifkan Kustomisasi Tema Admin & Login
@@ -82,7 +82,7 @@ add_action( 'customize_register', function( $wp_customize ) {
     $wp_customize->add_control( 'cc_enable_comments', array(
         'label'       => __( 'Aktifkan Fitur Komentar Global', 'crediblecompany' ),
         'description' => __( 'Jika dinonaktifkan, seluruh fitur komentar di website (sidebar menu, kolom daftar pos, dan form komentar) akan disembunyikan secara otomatis.', 'crediblecompany' ),
-        'section'     => 'cc_admin_theme_section',
+        'section'     => 'cc_blog_archive_section',
         'type'        => 'checkbox',
     ) );
 

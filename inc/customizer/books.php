@@ -8,9 +8,9 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_books_section', array(
-        'title'    => __( 'Pengaturan Katalog Buku', 'crediblecompany' ),
+        'title'    => __( '8. Katalog Buku', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 46,
+        'priority' => 80,
     ) );
 
     // Judul Buku Terbitan

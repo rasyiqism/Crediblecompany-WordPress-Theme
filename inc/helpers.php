@@ -26,12 +26,14 @@ function cc_maybe_ssl_url( $value ) {
     return $value;
 }
 
-function cc_get( $key, $default = '' ) {
-    $value = get_theme_mod( 'cc_' . $key, '' );
-    if ( $value === '' || $value === false || $value === null ) {
-        $value = $default;
+if ( ! function_exists( 'cc_get' ) ) {
+    function cc_get( $key, $default = '' ) {
+        $value = get_theme_mod( 'cc_' . $key, '' );
+        if ( $value === '' || $value === false || $value === null ) {
+            $value = $default;
+        }
+        return cc_maybe_ssl_url( $value );
     }
-    return cc_maybe_ssl_url( $value );
 }
 
 /**
@@ -112,6 +114,32 @@ if ( ! function_exists( 'cc_render_stars' ) ) {
 }
 
 /**
+ * Parse warna Hex menjadi array RGB [r, g, b].
+ *
+ * @param string $hex Warna berformat hex (misal: #ffffff atau #fff).
+ * @return array|false Array [int $r, int $g, int $b] atau false jika tidak valid.
+ */
+if ( ! function_exists( 'cc_hex_to_rgb' ) ) {
+    function cc_hex_to_rgb( $hex ) {
+        $hex = ltrim( trim( (string) $hex ), '#' );
+
+        if ( strlen( $hex ) === 3 ) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        if ( strlen( $hex ) !== 6 || ! ctype_xdigit( $hex ) ) {
+            return false;
+        }
+
+        return array(
+            hexdec( substr( $hex, 0, 2 ) ),
+            hexdec( substr( $hex, 2, 2 ) ),
+            hexdec( substr( $hex, 4, 2 ) ),
+        );
+    }
+}
+
+/**
  * Konversi warna Hex ke RGBA.
  *
  * @param string $hex   Warna berformat hex (misal: #ffffff atau #fff).
@@ -120,21 +148,23 @@ if ( ! function_exists( 'cc_render_stars' ) ) {
  */
 if ( ! function_exists( 'cc_hex_to_rgba' ) ) {
     function cc_hex_to_rgba( $hex, $alpha = 1.0 ) {
-        $hex = str_replace( '#', '', $hex );
-
-        if ( strlen( $hex ) == 3 ) {
-            $r = hexdec( substr( $hex, 0, 1 ) . substr( $hex, 0, 1 ) );
-            $g = hexdec( substr( $hex, 1, 1 ) . substr( $hex, 1, 1 ) );
-            $b = hexdec( substr( $hex, 2, 1 ) . substr( $hex, 2, 1 ) );
-        } elseif ( strlen( $hex ) == 6 ) {
-            $r = hexdec( substr( $hex, 0, 2 ) );
-            $g = hexdec( substr( $hex, 2, 2 ) );
-            $b = hexdec( substr( $hex, 4, 2 ) );
-        } else {
+        $rgb = cc_hex_to_rgb( $hex );
+        if ( false === $rgb ) {
             return $hex;
         }
 
-        return "rgba({$r}, {$g}, {$b}, {$alpha})";
+        return "rgba({$rgb[0]}, {$rgb[1]}, {$rgb[2]}, {$alpha})";
+    }
+}
+
+/**
+ * Ambil template pesan default WhatsApp secara terpusat (DRY).
+ *
+ * @return string
+ */
+if ( ! function_exists( 'cc_get_default_wa_message' ) ) {
+    function cc_get_default_wa_message() {
+        return 'Halo {Nama Marketing}, saya tertarik dengan layanan Anda.';
     }
 }
 

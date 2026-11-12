@@ -11,7 +11,7 @@
 
 get_header(); ?>
 
-<main class="app-main-content">
+<div class="app-main-content">
     <div class="app-header-bar">
         <a href="javascript:history.back()" class="app-back-btn">
             <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -77,7 +77,7 @@ get_header(); ?>
                     <input type="hidden" name="_cc_nonce" id="cc_form_nonce" value="">
                     
                     <!-- Honeypot Field untuk memblokir spam bots secara pasif -->
-                    <div style="display: none; @media (max-width: 0px) { display: none; }">
+                    <div style="display: none;" aria-hidden="true">
                         <label for="cc_hp_email">Confirm Email</label>
                         <input type="text" id="cc_hp_email" name="cc_hp_email" value="" tabindex="-1" autocomplete="off">
                     </div>
@@ -137,7 +137,7 @@ get_header(); ?>
         </div>
 
     </div>
-</main>
+</div>
 
 <!-- Cropper Modal Overlay -->
 <div id="cc-cropper-modal" class="cc-cropper-modal">

@@ -8,11 +8,6 @@
 
 get_header(); ?>
 
-<?php
-// Set View Count saat loading halaman Single
-cc_set_post_views( get_the_ID() );
-?>
-
 <section class="app-single-content">
     <?php while ( have_posts() ) : the_post(); ?>
     
@@ -113,14 +108,14 @@ cc_set_post_views( get_the_ID() );
                     <?php endif; ?>
 
                     <div class="app-article-body">
-                        <?php 
-                        // The content has already been passed through toc-generator to add IDs
-                        the_content(); 
+                        <?php
+                        // Gunakan konten yang sudah diproses the_content untuk TOC agar filter tidak berjalan 2x
+                        echo $content_for_toc; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                         ?>
-                        
+
                         <?php
                         wp_link_pages( array(
-                            'before' => '<div class="page-links">' . __( 'Halaman:', 'cc' ),
+                            'before' => '<div class="page-links">' . __( 'Halaman:', 'crediblecompany' ),
                             'after'  => '</div>',
                         ) );
                         ?>

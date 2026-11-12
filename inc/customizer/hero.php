@@ -14,7 +14,7 @@ add_action( 'customize_register', function( $wp_customize ) {
 
     // Daftarkan Section Hero
     $wp_customize->add_section( 'cc_hero_section', array(
-        'title'    => __( 'Hero Section', 'crediblecompany' ),
+        'title'    => __( '1. Hero', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
         'priority' => 10,
     ) );

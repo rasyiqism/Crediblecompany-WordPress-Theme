@@ -8,9 +8,9 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_faq_section', array(
-        'title'    => __( 'FAQ', 'crediblecompany' ),
+        'title'    => __( '10. FAQ', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 60,
+        'priority' => 100,
     ) );
 
     // Custom Control Class untuk Repeater JSON
@@ -32,78 +32,9 @@ add_action( 'customize_register', function( $wp_customize ) {
                     <textarea class="cc-faq-data-hidden" style="display:none;" <?php $this->link(); ?>><?php echo esc_textarea( $this->value() ); ?></textarea>
 
                     <div class="cc-faq-items"></div>
-                    
+
                     <button type="button" class="button cc-faq-add-btn" style="margin-top:10px;">+ Tambah FAQ</button>
                 </div>
-
-                <style>
-                    .cc-faq-item { background:#fff; border:1px solid #ccc; padding:10px; margin-bottom:10px; }
-                    .cc-faq-item input, .cc-faq-item textarea { width:100%; margin-bottom:8px; }
-                    .cc-faq-remove-btn { color:#d63638; cursor:pointer; font-size:12px; font-weight:bold; }
-                </style>
-
-                <script>
-                    jQuery(document).ready(function($) {
-                        var wrapper = $('.cc-faq-repeater-wrapper');
-                        var hiddenInput = wrapper.find('.cc-faq-data-hidden');
-                        var itemsContainer = wrapper.find('.cc-faq-items');
-                        var addBtn = wrapper.find('.cc-faq-add-btn');
-
-                        // Data Awal
-                        var data = [];
-                        try {
-                            if(hiddenInput.val()) {
-                                data = JSON.parse(hiddenInput.val());
-                            }
-                        } catch(e) {}
-
-                        // Fungsi Render 1 Item
-                        function renderItem(q, a) {
-                            var html = '<div class="cc-faq-item">';
-                            html += '<input type="text" class="faq-q" placeholder="Pertanyaan" value="' + (q ? q.replace(/"/g, '&quot;') : '') + '">';
-                            html += '<textarea class="faq-a" placeholder="Jawaban" rows="3">' + (a || '') + '</textarea>';
-                            html += '<span class="cc-faq-remove-btn">Remove</span>';
-                            html += '</div>';
-                            itemsContainer.append(html);
-                        }
-
-                        // Render Semua Data Awal
-                        if(data.length > 0) {
-                            $.each(data, function(index, item) {
-                                renderItem(item.q, item.a);
-                            });
-                        } else {
-                            renderItem('', ''); // Beri 1 kosong sebagai default
-                        }
-
-                        // Fungsi Sync ke Hidden Input dan Trigger Customizer Change
-                        function syncData() {
-                            var newData = [];
-                            itemsContainer.find('.cc-faq-item').each(function() {
-                                var q = $(this).find('.faq-q').val();
-                                var a = $(this).find('.faq-a').val();
-                                if(q !== '' || a !== '') {
-                                    newData.push({ q: q, a: a });
-                                }
-                            });
-                            hiddenInput.val(JSON.stringify(newData)).trigger('change');
-                        }
-
-                        // Event Listeners (Tiap ngetik, sync)
-                        itemsContainer.on('input', 'input, textarea', function() {
-                            syncData();
-                        });
-
-                        itemsContainer.on('click', '.cc-faq-remove-btn', function() {
-                            $(this).closest('.cc-faq-item').remove();
-                            syncData();
-                        });
-
-                        addBtn.on('click', function() {
-                            renderItem('', '');
-                        });
-                    });
-                </script>
                 <?php
             }
         }

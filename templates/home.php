@@ -77,39 +77,33 @@ $bg_end        = get_theme_mod( 'cc_blog_hero_bg_end', '#a855f7' );
     $blog_query = new WP_Query( $args );
 
     if ( $blog_query->have_posts() ) :
-        $count = 0;
-        
         if ( 1 === $paged ) : ?>
             <div class="featured-post-container">
-                <?php 
-                $blog_query->the_post(); // Ambil post pertama
+                <?php
+                $blog_query->the_post(); // Ambil post pertama untuk featured
                 get_template_part( 'template-parts/card-post', null, array( 'style' => 'featured' ) );
                 ?>
             </div>
         <?php endif; ?>
 
         <div class="app-feed-container" id="ajax-feed-container">
-            <?php 
-            while ( $blog_query->have_posts() ) : 
-                $blog_query->the_post(); 
-                if ( 1 === $paged && 0 === $count ) {
-                    $count++;
-                    continue; // Lewati post pertama jika di halaman 1 karena sudah tampil di featured
-                }
+            <?php
+            while ( $blog_query->have_posts() ) :
+                $blog_query->the_post();
                 get_template_part( 'template-parts/card-post', null, array( 'style' => 'app' ) );
-                $count++;
             endwhile;
             ?>
         </div>
 
         <?php if ( $blog_query->max_num_pages > 1 ) : ?>
             <div class="load-more-container">
-                <button id="load-more-btn" 
-                        class="btn-load-more" 
-                        data-page="1" 
-                        data-max-pages="<?php echo $blog_query->max_num_pages; ?>" 
+                <button id="load-more-btn"
+                        class="btn-load-more"
+                        data-page="1"
+                        data-max-pages="<?php echo esc_attr( $blog_query->max_num_pages ); ?>"
                         data-post-type="post"
-                        data-orderby="<?php echo esc_attr( $orderby ); ?>">
+                        data-orderby="<?php echo esc_attr( $orderby ); ?>"
+                        data-cat="<?php echo esc_attr( $cat ); ?>">
                     Muat Lebih Banyak
                 </button>
             </div>

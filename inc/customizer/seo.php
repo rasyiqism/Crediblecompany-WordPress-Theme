@@ -8,9 +8,9 @@
 add_action( 'customize_register', function ( $wp_customize ) {
     // Tambahkan Section SEO di dalam Panel Homepage
     $wp_customize->add_section( 'cc_seo_section', array(
-        'title'    => __( 'SEO Optimizer', 'crediblecompany' ),
+        'title'    => __( 'Optimasi SEO', 'crediblecompany' ),
         'panel'    => 'cc_global_panel',
-        'priority' => 20,
+        'priority' => 60,
     ) );
 
     // 1. Meta Description Homepage (Manual)

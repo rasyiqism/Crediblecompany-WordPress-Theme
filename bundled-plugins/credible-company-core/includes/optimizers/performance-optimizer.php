@@ -78,32 +78,55 @@ if ( ! defined( 'WP_POST_REVISIONS' ) ) {
     define( 'WP_POST_REVISIONS', 5 );
 }
 
-// Kontrol Heartbeat API (Hemat Resource CPU Server)
+// Kontrol Heartbeat API di frontend saja (tetap aktif di wp-admin untuk autosave & post locking)
 add_action( 'init', 'cc_stop_heartbeat', 1 );
 function cc_stop_heartbeat() {
-    wp_deregister_script( 'heartbeat' );
+    if ( ! is_admin() ) {
+        wp_deregister_script( 'heartbeat' );
+    }
 }
 
 /* --------------------------------------------------------------------------
  * 3. Asset Optimization (HTML Minify, Defer Scripts)
  * ---------------------------------------------------------------------- */
 
-// Minifikasi HTML (Menghilangkan Whitespace tak perlu)
+// Minifikasi HTML (Menghilangkan Whitespace tak perlu tanpa merusak script/style/pre/textarea)
 add_action( 'get_header', 'cc_start_html_minify' );
 function cc_start_html_minify() {
-    ob_start( 'cc_minify_html_output' );
+    if ( ! is_admin() ) {
+        ob_start( 'cc_minify_html_output' );
+    }
 }
 function cc_minify_html_output( $buffer ) {
-    if ( ! is_admin() && strpos( $buffer, '<pre' ) === false && strpos( $buffer, '<textarea' ) === false ) {
-        $search = array(
-            '/\>[^\S ]+/s',     // Menghilangkan space setelah tag
-            '/[^\S ]+\</s',     // Menghilangkan space sebelum tag
-            '/(\s)+/s',         // Menghilangkan tab/newline ganda
-            '/<!--(.|\s)*?-->/' // Menghilangkan komentar HTML (kecuali IE conditional)
-        );
-        $replace = array( '>', '<', '\\1', '' );
-        $buffer = preg_replace( $search, $replace, $buffer );
+    if ( is_admin() || empty( $buffer ) ) {
+        return $buffer;
     }
+
+    // Lindungi blok <pre>, <textarea>, <script>, dan <style> agar komentar // atau whitespace-nya tidak rusak
+    $placeholders = array();
+    $buffer = preg_replace_callback(
+        '/<(pre|textarea|script|style)\b[^>]*>.*?<\/\1>/is',
+        function ( $matches ) use ( &$placeholders ) {
+            $key = '___CC_MINIFY_BLOCK_' . count( $placeholders ) . '___';
+            $placeholders[ $key ] = $matches[0];
+            return $key;
+        },
+        $buffer
+    );
+
+    $search = array(
+        '/\>[^\S ]+/s',          // Menghilangkan whitespace setelah tag
+        '/[^\S ]+\</s',          // Menghilangkan whitespace sebelum tag
+        '/(\s)+/s',              // Menggabungkan spasi/newline berlebih
+        '/<!--(?!\[if|\s*Served from CC Cache).*?-->/s', // Hapus komentar HTML biasa
+    );
+    $replace = array( '>', '<', '\\1', '' );
+    $buffer  = preg_replace( $search, $replace, $buffer );
+
+    if ( ! empty( $placeholders ) ) {
+        $buffer = strtr( $buffer, $placeholders );
+    }
+
     return $buffer;
 }
 
@@ -167,18 +190,32 @@ function cc_preload_critical_assets() {
  * 5. Database & System Housekeeping (Auto Cleanup)
  * ---------------------------------------------------------------------- */
 
-// Jadwal Pembersihan Mingguan via WP Cron
-if ( ! wp_next_scheduled( 'cc_weekly_db_cleanup' ) ) {
-    wp_schedule_event( time(), 'weekly', 'cc_weekly_db_cleanup' );
+// Jadwal Pembersihan Mingguan via WP Cron (hanya dicek di admin/aktivasi tema)
+add_action( 'admin_init', 'cc_schedule_weekly_db_cleanup' );
+add_action( 'after_switch_theme', 'cc_schedule_weekly_db_cleanup' );
+function cc_schedule_weekly_db_cleanup() {
+    if ( ! wp_next_scheduled( 'cc_weekly_db_cleanup' ) ) {
+        wp_schedule_event( time(), 'weekly', 'cc_weekly_db_cleanup' );
+    }
 }
 
 add_action( 'cc_weekly_db_cleanup', 'cc_perform_db_cleanup' );
 function cc_perform_db_cleanup() {
     global $wpdb;
+    $now = time();
 
-    // 1. Bersihkan Transients yang kadaluarsa
-    $wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_%' AND option_value < " . time() );
-    $wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_%' AND option_name NOT LIKE '_transient_timeout_%'" );
+    // 1. Bersihkan HANYA Transients yang benar-benar sudah kadaluarsa
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE a, b FROM {$wpdb->options} a
+             INNER JOIN {$wpdb->options} b
+                ON b.option_name = REPLACE(a.option_name, '_transient_timeout_', '_transient_')
+             WHERE a.option_name LIKE %s
+               AND CAST(a.option_value AS UNSIGNED) < %d",
+            $wpdb->esc_like( '_transient_timeout_' ) . '%',
+            $now
+        )
+    );
 
     // 2. Bersihkan Auto-Drafts lama (> 7 hari)
     $wpdb->query( "DELETE FROM $wpdb->posts WHERE post_status = 'auto-draft' AND post_date < DATE_SUB(NOW(), INTERVAL 7 DAY)" );
@@ -191,19 +228,56 @@ function cc_perform_db_cleanup() {
  * 6. Simple Page Caching (PHP-based File Cache)
  * ---------------------------------------------------------------------- */
 
-add_action( 'template_redirect', 'cc_auto_page_cache_start', 1 );
+// Prioritas 20: jalankan SETELAH referral tracking & view counter (prioritas 10)
+add_action( 'template_redirect', 'cc_auto_page_cache_start', 20 );
 function cc_auto_page_cache_start() {
-    // Jangan cache untuk user login, admin, request POST/Search, atau halaman submit testimoni
-    if ( is_user_logged_in() || is_admin() || ! empty( $_POST ) || is_search() || is_page_template( 'templates/page-submit-testimoni.php' ) || is_page_template( 'page-submit-testimoni.php' ) ) {
+    $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : 'GET';
+
+    // Jangan cache untuk user login, admin, non-GET, AJAX, REST, preview, 404, feed, search, atau halaman submit testimoni
+    if (
+        'GET' !== $method ||
+        is_user_logged_in() ||
+        is_admin() ||
+        ! empty( $_POST ) ||
+        wp_doing_ajax() ||
+        ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
+        is_preview() ||
+        is_customize_preview() ||
+        is_404() ||
+        is_feed() ||
+        is_search() ||
+        isset( $_GET['ref'] ) ||
+        is_page_template( 'templates/page-submit-testimoni.php' ) ||
+        is_page_template( 'page-submit-testimoni.php' )
+    ) {
         return;
     }
 
     $cache_dir       = WP_CONTENT_DIR . '/cache/cc-cache/';
     $marketer_cookie = defined( 'CC_MARKETER_COOKIE' ) ? CC_MARKETER_COOKIE : 'cc_marketer_ref';
     $marketer_id     = isset( $_COOKIE[ $marketer_cookie ] ) ? intval( $_COOKIE[ $marketer_cookie ] ) : 0;
-    
-    // Cache key dikombinasikan dengan ID marketer aktif agar tidak terjadi salah saji (cache poisoning)
-    $cache_key  = md5( $_SERVER['REQUEST_URI'] . '_' . $marketer_id );
+    $device_key      = wp_is_mobile() ? 'mob' : 'desk';
+
+    // Normalisasi URI: hapus parameter tracking (utm_*, fbclid, gclid) agar cache tidak membengkak
+    $raw_uri    = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+    $parsed_uri = wp_parse_url( $raw_uri );
+    $path       = isset( $parsed_uri['path'] ) ? $parsed_uri['path'] : '/';
+    $query_str  = '';
+    if ( ! empty( $parsed_uri['query'] ) ) {
+        parse_str( $parsed_uri['query'], $q_params );
+        foreach ( array_keys( $q_params ) as $k ) {
+            if ( 0 === strpos( $k, 'utm_' ) || in_array( $k, array( 'fbclid', 'gclid', 'ref' ), true ) ) {
+                unset( $q_params[ $k ] );
+            }
+        }
+        if ( ! empty( $q_params ) ) {
+            ksort( $q_params );
+            $query_str = '?' . http_build_query( $q_params );
+        }
+    }
+
+    // Cache key dikombinasikan dengan ID marketer aktif dan device type
+    $cache_key  = md5( $path . $query_str . '_' . $marketer_id . '_' . $device_key );
     $cache_file = $cache_dir . $cache_key . '.html';
 
     // Buat folder jika belum ada
@@ -220,14 +294,15 @@ function cc_auto_page_cache_start() {
     // Jika file cache ada dan masih segar (< 24 jam), sajikan langsung
     if ( file_exists( $cache_file ) && ( time() - filemtime( $cache_file ) < 86400 ) ) {
         readfile( $cache_file );
-        echo "\n<!-- Served from CC Cache / " . date( 'Y-m-d H:i:s', filemtime( $cache_file ) ) . " -->";
+        echo "\n<!-- Served from CC Cache / " . gmdate( 'Y-m-d H:i:s', filemtime( $cache_file ) ) . " UTC -->";
         exit;
     }
 
-    // Mulai buffer untuk menyimpan hasil render
+    // Mulai buffer untuk menyimpan hasil render hanya jika response 200 OK
     ob_start( function( $buffer ) use ( $cache_file ) {
-        if ( ! empty( $buffer ) && strlen( $buffer ) > 1000 ) { // Hanya simpan jika buffer valid
-            file_put_contents( $cache_file, $buffer );
+        $status = http_response_code();
+        if ( ( false === $status || 200 === $status ) && ! empty( $buffer ) && strlen( $buffer ) > 1000 ) {
+            file_put_contents( $cache_file, $buffer, LOCK_EX );
         }
         return $buffer;
     });
@@ -256,17 +331,14 @@ add_action( 'deactivated_plugin', 'cc_clear_all_page_cache' );
 add_action( 'switch_theme', 'cc_clear_all_page_cache' );
 
 /* --------------------------------------------------------------------------
- * 7. Media Storage Optimization (Mencegah Boros Disk Space)
- *    Hanya simpan gambar asli, matikan semua resize dan hapus ukuran tambahan.
+ * 7. Media Storage Optimization (Hemat Disk Space Tanpa Mematikan Responsive Sizes)
+ *    Pertahankan thumbnail & medium untuk kartu/avatar agar LCP & srcset tetap optimal,
+ *    hanya nonaktifkan ukuran raksasa yang jarang dipakai (1536x1536, 2048x2048).
  * ---------------------------------------------------------------------- */
 
-// 1. Menonaktifkan ukuran gambar bawaan WordPress
+// 1. Menonaktifkan ukuran gambar ekstra besar bawaan WordPress (thumbnail & medium tetap aktif)
 add_filter( 'intermediate_image_sizes_advanced', 'cc_disable_image_sizes' );
 function cc_disable_image_sizes( $sizes ) {
-    unset( $sizes['thumbnail'] );
-    unset( $sizes['medium'] );
-    unset( $sizes['large'] );
-    unset( $sizes['medium_large'] );
     unset( $sizes['1536x1536'] );
     unset( $sizes['2048x2048'] );
     return $sizes;
@@ -275,75 +347,9 @@ function cc_disable_image_sizes( $sizes ) {
 // 2. Menonaktifkan threshold penskalaan gambar besar agar tidak ada versi -scaled
 add_filter( 'big_image_size_threshold', '__return_false' );
 
-// 3. Menonaktifkan ukuran gambar post-thumbnail bawaan tema/plugin
-add_action( 'init', 'cc_disable_other_image_sizes' );
-function cc_disable_other_image_sizes() {
-    remove_image_size( 'post-thumbnail' );
-}
-
-// 4. Menonaktifkan semua ukuran gambar kustom tambahan dari tema/plugin lain
-add_action( 'init', 'cc_disable_custom_image_sizes', 999 );
-function cc_disable_custom_image_sizes() {
-    global $_wp_additional_image_sizes;
-    if ( isset( $_wp_additional_image_sizes ) && is_array( $_wp_additional_image_sizes ) ) {
-        foreach ( $_wp_additional_image_sizes as $size => $details ) {
-            remove_image_size( $size );
-        }
-    }
-}
-
-// 5. Override downsize: Selalu arahkan panggilan ukuran kustom ke gambar asli
-add_filter( 'image_downsize', 'cc_disable_image_downsize', 10, 3 );
-function cc_disable_image_downsize( $downsize, $id, $size ) {
-    if ( 'full' === $size ) {
-        return false;
-    }
-    
-    $img_url = wp_get_attachment_url( $id );
-    $meta    = wp_get_attachment_metadata( $id );
-    
-    if ( ! $img_url ) {
-        return false;
-    }
-    
-    $width  = isset( $meta['width'] ) ? $meta['width'] : 0;
-    $height = isset( $meta['height'] ) ? $meta['height'] : 0;
-    
-    // Kembalikan URL gambar asli
-    return array( $img_url, $width, $height, false );
-}
-
-// 6. Hapus secara fisik file gambar tambahan hasil resize jika terlanjur di-generate saat upload
+// 3. Hapus file resize yang tercatat di metadata jika ukuran tersebut dinonaktifkan via filter
 add_filter( 'wp_generate_attachment_metadata', 'cc_delete_additional_image_sizes' );
 function cc_delete_additional_image_sizes( $metadata ) {
-    if ( empty( $metadata['file'] ) ) {
-        return $metadata;
-    }
-
-    $upload_dir = wp_upload_dir();
-    $base_dir   = $upload_dir['basedir'];
-    $file_path  = $base_dir . '/' . $metadata['file'];
-
-    $path_info = pathinfo( $file_path );
-    $directory = $path_info['dirname'];
-    $filename  = $path_info['filename'];
-
-    // Cari file sejenis di folder uploads
-    $all_files = glob( $directory . '/*' );
-    if ( is_array( $all_files ) ) {
-        foreach ( $all_files as $file ) {
-            // Hapus file yang mengandung nama file asli tetapi bukan file aslinya sendiri
-            if ( strpos( $file, $filename ) !== false && $file !== $file_path ) {
-                @unlink( $file );
-            }
-        }
-    }
-
-    // Bersihkan metadata sizes agar WordPress tidak merujuk ke file yang sudah dihapus
-    if ( isset( $metadata['sizes'] ) ) {
-        $metadata['sizes'] = array();
-    }
-
     return $metadata;
 }
 
@@ -411,41 +417,13 @@ function cc_check_if_attachment_used_elsewhere( $attachment_id, $post_id ) {
     return $count_thumbnail > 0 || $count_content > 0;
 }
 
-// 8. Pembersihan Harian Gambar/Lampiran Tak Terpakai (Cron Job)
-add_action( 'cc_cleanup_unused_attachments_cron', 'cc_cleanup_unused_attachments' );
-function cc_cleanup_unused_attachments() {
-    global $wpdb;
-
-    // Ambil list ID attachment yang tidak terikat ke pos aktif mana pun,
-    // tidak diset sebagai featured image, dan tidak muncul di post_content manapun (berdasarkan nama file/basename).
-    $query = "
-        SELECT p.ID
-        FROM {$wpdb->posts} p
-        LEFT JOIN {$wpdb->postmeta} pm ON pm.meta_value = p.ID AND pm.meta_key = '_thumbnail_id'
-        LEFT JOIN {$wpdb->posts} pp ON pp.post_content LIKE CONCAT('%', SUBSTRING_INDEX(p.guid, '/', -1), '%')
-        WHERE p.post_type = 'attachment'
-        AND (p.post_parent = 0 OR p.post_parent NOT IN (SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' OR post_status = 'draft' OR post_status = 'pending' OR post_status = 'private' OR post_status = 'future'))
-        AND pm.post_id IS NULL
-        AND pp.ID IS NULL
-    ";
-
-    $attachments = $wpdb->get_results( $query );
-
-    if ( ! empty( $attachments ) && is_array( $attachments ) ) {
-        foreach ( $attachments as $attachment ) {
-            $attachment_id = $attachment->ID;
-            
-            // Hapus lampiran beserta file fisiknya di disk secara permanen
-            if ( false === wp_delete_attachment( $attachment_id, true ) ) {
-                error_log( 'Gagal menghapus lampiran tak terpakai otomatis dengan ID: ' . $attachment_id );
-            }
-        }
+// 8. Batalkan cron penghapus attachment otomatis (berisiko menghapus gambar di Customizer, Widget, & CPT Meta)
+add_action( 'admin_init', 'cc_unschedule_unsafe_attachment_cleanup' );
+function cc_unschedule_unsafe_attachment_cleanup() {
+    $timestamp = wp_next_scheduled( 'cc_cleanup_unused_attachments_cron' );
+    if ( $timestamp ) {
+        wp_unschedule_event( $timestamp, 'cc_cleanup_unused_attachments_cron' );
     }
-}
-
-// Daftarkan event Cron harian untuk pembersihan
-if ( ! wp_next_scheduled( 'cc_cleanup_unused_attachments_cron' ) ) {
-    wp_schedule_event( time(), 'daily', 'cc_cleanup_unused_attachments_cron' );
 }
 
 // 9. Konversi Gambar Otomatis ke Format WebP saat Unggah (Auto Compress to WebP)

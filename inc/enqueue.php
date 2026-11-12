@@ -178,3 +178,39 @@ add_action( 'wp_enqueue_scripts', function () {
         wp_enqueue_script( 'comment-reply' );
     }
 } );
+
+/**
+ * Enqueue script Live Preview Customizer (postMessage).
+ */
+add_action( 'customize_preview_init', function () {
+    wp_enqueue_script(
+        'cc-customizer-preview',
+        get_template_directory_uri() . '/assets/js/customizer-preview.js',
+        array( 'customize-preview', 'jquery' ),
+        wp_get_theme()->get( 'Version' ),
+        true
+    );
+} );
+
+/**
+ * Enqueue script & stylesheet untuk panel kontrol Customizer.
+ */
+add_action( 'customize_controls_enqueue_scripts', function () {
+    $theme_version = wp_get_theme()->get( 'Version' );
+    $theme_uri     = get_template_directory_uri();
+
+    wp_enqueue_style(
+        'cc-customizer-controls',
+        $theme_uri . '/assets/css/customizer-controls.css',
+        array(),
+        $theme_version
+    );
+
+    wp_enqueue_script(
+        'cc-customizer-controls',
+        $theme_uri . '/assets/js/customizer-controls.js',
+        array( 'jquery', 'customize-controls' ),
+        $theme_version,
+        true
+    );
+} );

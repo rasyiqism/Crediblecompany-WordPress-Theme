@@ -45,18 +45,20 @@ function cc_handle_custom_login_redirect() {
     }
 
     $login_slug  = cc_get_login_slug();
-    $request_uri = untrailingslashit( strtok( $_SERVER['REQUEST_URI'], '?' ) );
+    $request_uri = untrailingslashit( strtok( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/', '?' ) );
+    $target_path = untrailingslashit( (string) wp_parse_url( home_url( '/' . $login_slug ), PHP_URL_PATH ) );
 
-    // Jika user mengakses /masuk, buat token dinamis lalu arahkan ke wp-login.php
-    if ( $request_uri === '/' . $login_slug ) {
+    // Jika user mengakses /masuk (mendukung install di root maupun subdirektori), buat token dinamis & cookie sesi singkat
+    if ( $request_uri === $target_path ) {
         $token = cc_create_login_token();
+        setcookie( 'cc_login_access', $token, time() + 1800, COOKIEPATH ? COOKIEPATH : '/', COOKIE_DOMAIN, is_ssl(), true );
         wp_safe_redirect( site_url( 'wp-login.php?cc_token=' . rawurlencode( $token ) ) );
         exit;
     }
 }
 
 /**
- * Blokir akses langsung ke wp-login.php jika tidak membawa token valid atau bukan proses POST.
+ * Blokir akses langsung ke wp-login.php jika tidak membawa token valid (GET maupun POST).
  */
 add_action( 'login_init', 'cc_protect_login_page' );
 function cc_protect_login_page() {
@@ -71,20 +73,23 @@ function cc_protect_login_page() {
         return;
     }
 
-
-    // Abaikan jika sedang proses POST (submit form login)
-    if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
-        return;
+    // Cek token dinamis dari query string atau cookie HttpOnly (mendukung GET & POST form login)
+    $submitted_token = '';
+    if ( isset( $_GET['cc_token'] ) ) {
+        $submitted_token = sanitize_text_field( wp_unslash( $_GET['cc_token'] ) );
+    } elseif ( isset( $_COOKIE['cc_login_access'] ) ) {
+        $submitted_token = sanitize_text_field( wp_unslash( $_COOKIE['cc_login_access'] ) );
     }
 
-    // Cek token dinamis — ambil dari transient, hapus setelah dipakai (one-time use)
-    $submitted_token = isset( $_GET['cc_token'] ) ? sanitize_text_field( $_GET['cc_token'] ) : '';
-    $token_valid     = false;
+    $token_valid = false;
     if ( ! empty( $submitted_token ) ) {
         $transient_key = 'cc_login_token_' . $submitted_token;
         if ( get_transient( $transient_key ) ) {
-            delete_transient( $transient_key ); // Hapus setelah verifikasi (single-use)
             $token_valid = true;
+            // Hapus token & cookie setelah proses POST login selesai dipicu
+            if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+                delete_transient( $transient_key );
+            }
         }
     }
 
@@ -203,15 +208,10 @@ function cc_clean_admin_menu() {
 }
 
 /**
- * Mengecek apakah website berjalan di lingkungan produksi (domain publisher.ppns.ac.id).
+ * Mengecek apakah website menggunakan HTTPS (secara langsung atau di balik reverse proxy).
  */
 function cc_is_prod_env() {
-    $http_host   = isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : '';
-    $server_name = isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : '';
-    return (
-        false !== stripos( $http_host, 'publisher.ppns.ac.id' ) ||
-        false !== stripos( $server_name, 'publisher.ppns.ac.id' )
-    );
+    return is_ssl() || 0 === strpos( home_url(), 'https://' );
 }
 
 // Filter URL attachment media agar menggunakan HTTPS saat di produksi

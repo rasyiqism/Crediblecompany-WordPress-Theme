@@ -18,6 +18,8 @@
                 const postType = btn.getAttribute('data-post-type');
                 const orderby = btn.getAttribute('data-orderby') || 'date';
                 const exclude = btn.getAttribute('data-exclude') || 0;
+                const cat = btn.getAttribute('data-cat') || 0;
+                const ppp = btn.getAttribute('data-ppp') || 0;
 
                 // Tentukan target container berdasar ID tombol atau konteks
                 let targetContainer = document.getElementById('ajax-feed-container');
@@ -39,6 +41,8 @@
                 formData.append('post_type', postType);
                 formData.append('orderby', orderby);
                 formData.append('exclude', exclude);
+                if (cat) formData.append('cat', cat);
+                if (ppp) formData.append('ppp', ppp);
 
                 fetch(ccAjax.ajaxurl, {
                     method: 'POST',

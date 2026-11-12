@@ -14,7 +14,7 @@ add_action( 'customize_register', function( $wp_customize ) {
 
     // Registrasi section Statistik
     $wp_customize->add_section( 'cc_stats_section', array(
-        'title'    => __( 'Statistik Section', 'crediblecompany' ),
+        'title'    => __( '2. Statistik', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
         'priority' => 20,
     ) );

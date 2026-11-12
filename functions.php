@@ -6,8 +6,10 @@
  * @package CredibleCompany
  */
 
-// Sembunyikan Admin Bar di frontend
-add_filter( 'show_admin_bar', '__return_false' );
+// Sembunyikan Admin Bar di frontend hanya untuk non-editor/subscriber
+add_filter( 'show_admin_bar', function ( $show ) {
+    return current_user_can( 'edit_posts' ) ? $show : false;
+} );
 
 /* --------------------------------------------------------------------------
  * 1. Loader — Muat semua modul dari folder inc/
@@ -20,17 +22,9 @@ require_once $_cc_inc . 'helpers.php';
 require_once $_cc_inc . 'enqueue.php';
 require_once $_cc_inc . 'breadcrumbs.php';
 
-// Custom Post Types
-require_once $_cc_inc . 'cpts/cpt-testimoni.php';
-require_once $_cc_inc . 'cpts/cpt-paket-jasa.php';
-require_once $_cc_inc . 'cpts/cpt-marketing.php';
-
-// Fitur konten
-require_once $_cc_inc . 'post-views.php';
+// Fitur tampilan & interaksi konten (Theme Territory)
 require_once $_cc_inc . 'toc-generator.php';
 require_once $_cc_inc . 'custom-comments.php';
-require_once $_cc_inc . 'dynamic-wa.php';
-require_once $_cc_inc . 'submit-testimoni.php';
 require_once $_cc_inc . 'ajax-loadmore.php';
 
 // Customizer (semua panel & settings)
@@ -42,13 +36,11 @@ require_once $_cc_inc . 'admin-theme-engine.php';
 // Fitur Whitelabel Dashboard Admin
 require_once $_cc_inc . 'admin-whitelabel.php';
 
-// Optimizers (SEO, Keamanan, Performa) — urutan: performance dulu, SEO terakhir
-require_once $_cc_inc . 'optimizers/performance-optimizer.php';
-require_once $_cc_inc . 'optimizers/security-optimizer.php';
-require_once $_cc_inc . 'optimizers/seo-optimizer.php';
-
-// Auto-installer MU Plugin (force SSL untuk reverse proxy)
-require_once $_cc_inc . 'mu-plugin-installer.php';
+// One-Click Companion Plugin Installer & Graceful Fallback
+require_once $_cc_inc . 'plugin-installer.php';
+if ( ! defined( 'CC_CORE_ACTIVE' ) ) {
+    require_once $_cc_inc . 'plugin-fallbacks.php';
+}
 
 unset( $_cc_inc ); // Bersihkan variabel temporary
 
@@ -195,12 +187,23 @@ function cc_resolve_template( $template ) {
         }
     }
 
-    // Archive/Kategori/CPT Archive — coba archive-{post_type}.php dulu
+    // Archive/Kategori/CPT Archive — coba archive-{post_type}.php dulu (aman meski arsip kosong)
     if ( is_archive() ) {
-        $post_type     = get_post_type();
-        $specific_file = "archive-{$post_type}.php";
-        if ( $post_type && is_post_type_archive( $post_type ) && file_exists( $dir . $specific_file ) ) {
-            return $dir . $specific_file;
+        $post_type = get_query_var( 'post_type' );
+        if ( is_array( $post_type ) ) {
+            $post_type = reset( $post_type );
+        }
+        if ( empty( $post_type ) ) {
+            $queried_obj = get_queried_object();
+            if ( $queried_obj instanceof WP_Post_Type ) {
+                $post_type = $queried_obj->name;
+            }
+        }
+        if ( $post_type && is_post_type_archive( $post_type ) ) {
+            $specific_file = "archive-{$post_type}.php";
+            if ( file_exists( $dir . $specific_file ) ) {
+                return $dir . $specific_file;
+            }
         }
         if ( file_exists( $dir . 'archive.php' ) ) {
             return $dir . 'archive.php';

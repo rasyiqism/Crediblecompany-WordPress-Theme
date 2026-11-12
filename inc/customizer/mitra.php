@@ -8,9 +8,9 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_mitra_section', array(
-        'title'    => __( 'Mitra & Proses', 'crediblecompany' ),
+        'title'    => __( '7. Mitra & Proses', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 50,
+        'priority' => 70,
     ) );
 
     $wp_customize->add_setting( 'cc_mitra_proses_tagline', array(

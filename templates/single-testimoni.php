@@ -138,38 +138,41 @@ get_header(); ?>
                 <div class="related-testimonials-section premium-carousel-section" style="margin: 60px 0;">
                     <h3 class="section-title-premium">Testimoni Lainnya</h3>
                     <div class="testi-feed-container">
-                        <div class="testi-related-grid" id="ajax-related-container">
-                            <?php
-                            $current_id = get_the_ID();
-                            $related_testi_query = new WP_Query( array(
-                                'post_type'      => 'testimoni',
-                                'posts_per_page' => 4,
-                                'post__not_in'   => array( $current_id ),
-                                'orderby'        => 'date',
-                                'order'          => 'DESC'
-                            ) );
+                        <?php
+                        $current_id          = get_the_ID();
+                        $related_testi_query = new WP_Query( array(
+                            'post_type'      => 'testimoni',
+                            'posts_per_page' => 4,
+                            'post__not_in'   => array( $current_id ),
+                            'orderby'        => 'date',
+                            'order'          => 'DESC',
+                        ) );
 
-                            if ( $related_testi_query->have_posts() ) :
-                                while ( $related_testi_query->have_posts() ) : $related_testi_query->the_post();
+                        if ( $related_testi_query->have_posts() ) : ?>
+                            <div class="testi-related-grid" id="ajax-related-container">
+                                <?php
+                                while ( $related_testi_query->have_posts() ) :
+                                    $related_testi_query->the_post();
                                     get_template_part( 'template-parts/card-testimoni', null, array( 'is_link' => true ) );
                                 endwhile;
-                            ?>
-                        </div>
-
-                        <?php if ( $related_testi_query->max_num_pages > 1 ) : ?>
-                            <div class="load-more-container" style="margin-top: 30px; text-align: center; width: 100%;">
-                                <button id="load-more-related-btn" 
-                                        class="btn-load-more" 
-                                        data-page="1" 
-                                        data-max-pages="<?php echo $related_testi_query->max_num_pages; ?>" 
-                                        data-post-type="testimoni"
-                                        data-exclude="<?php echo $current_id; ?>">
-                                    Muat Lebih Banyak
-                                </button>
+                                ?>
                             </div>
-                        <?php endif; ?>
 
-                        <?php 
+                            <?php if ( $related_testi_query->max_num_pages > 1 ) : ?>
+                                <div class="load-more-container" style="margin-top: 30px; text-align: center; width: 100%;">
+                                    <button id="load-more-related-btn"
+                                            class="btn-load-more"
+                                            data-page="1"
+                                            data-max-pages="<?php echo esc_attr( $related_testi_query->max_num_pages ); ?>"
+                                            data-post-type="testimoni"
+                                            data-ppp="4"
+                                            data-exclude="<?php echo esc_attr( $current_id ); ?>">
+                                        Muat Lebih Banyak
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php
                             wp_reset_postdata();
                         endif; ?>
                     </div>

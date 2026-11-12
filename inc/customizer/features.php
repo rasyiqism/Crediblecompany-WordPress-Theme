@@ -8,9 +8,9 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_features_section', array(
-        'title'    => __( 'Features (Mengapa Memilih)', 'crediblecompany' ),
+        'title'    => __( '4. Keunggulan (Features)', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 30,
+        'priority' => 40,
     ) );
 
     // Judul Utama (Mengapa Memilih Kami?)

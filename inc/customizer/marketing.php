@@ -8,7 +8,7 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_marketing_section', array(
-        'title'    => __( 'Marketing Options', 'crediblecompany' ),
+        'title'    => __( 'WhatsApp & Tim Marketing', 'crediblecompany' ),
         'panel'    => 'cc_global_panel',
         'priority' => 40,
     ) );

@@ -141,3 +141,86 @@
     text-align: center;
     width: 100%;
 }
+
+/* --------------------------------------------------------------------------
+ * 7. Breadcrumbs & Social Share
+ * ---------------------------------------------------------------------- */
+.cc-breadcrumbs {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+}
+
+.cc-breadcrumbs__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cc-breadcrumbs__item {
+    display: flex;
+    align-items: center;
+}
+
+.cc-breadcrumbs__link {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.cc-breadcrumbs__sep {
+    margin-left: 8px;
+}
+
+.cc-breadcrumbs__current {
+    color: var(--text-dark);
+    flex: 1;
+    min-width: 0;
+}
+
+.cc-breadcrumbs__current-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+.cc-share-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin: 25px 0 15px;
+    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cc-share-buttons__label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.cc-share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.cc-share-btn:hover {
+    transform: scale(1.1);
+}
+
+.cc-share-btn--fb { background: #1877F2; }
+.cc-share-btn--x  { background: #000000; }
+.cc-share-btn--wa { background: #25D366; }
+.cc-share-btn--li { background: #0A66C2; }

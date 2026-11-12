@@ -14,9 +14,9 @@ add_action( 'customize_register', function( $wp_customize ) {
 
     // Daftarkan seksi About
     $wp_customize->add_section( 'cc_about_section', array(
-        'title'    => __( 'About Section', 'crediblecompany' ),
+        'title'    => __( '3. Tentang Kami (About)', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 21,
+        'priority' => 30,
     ) );
 
     $wp_customize->add_setting( 'cc_about_desc', array(

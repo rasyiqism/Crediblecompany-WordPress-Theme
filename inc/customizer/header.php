@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_header_section', array(
-        'title'    => __( 'Pengaturan Header (Navbar)', 'crediblecompany' ),
+        'title'    => __( 'Header & Navigasi', 'crediblecompany' ),
         'panel'    => 'cc_global_panel',
         'priority' => 10,
     ) );

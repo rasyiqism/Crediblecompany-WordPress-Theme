@@ -86,7 +86,7 @@
         <div class="footer-bottom">
             <div class="container footer-flex">
                 <!-- Footer Links -->
-                <div class="footer-nav">
+                <ul class="footer-nav" style="list-style: none; margin: 0; padding: 0;">
                     <?php
                     if ( has_nav_menu( 'footer_navigation' ) ) {
                         wp_nav_menu( array(
@@ -97,10 +97,10 @@
                             'fallback_cb'    => false,
                         ) );
                     } else {
-                        echo '<a href="#">About Us</a>';
+                        echo '<li><a href="#">About Us</a></li>';
                     }
                     ?>
-                </div>
+                </ul>
 
                 <!-- Copyright -->
                 <div class="footer-copyright">
@@ -118,7 +118,7 @@
  * Hanya ditampilkan jika nomor WA diisi di Customizer > Social Media.
  */
 $wa_number  = cc_get( 'whatsapp_number', '' );
-$wa_message = cc_get( 'whatsapp_message', 'Halo {Nama Marketing}, saya tertarik dengan layanan Anda .... Note: Transaksi HANYA di rekening atas nama:- Sutrisno (BSI - 7145671967), - Ahmad Fathur Rozaq (BSI - 7187174923).' );
+$wa_message = cc_get( 'whatsapp_message', cc_get_default_wa_message() );
 
 if ( ! empty( $wa_number ) && ! is_single() ) :
     // Bersihkan nomor dari karakter non-digit

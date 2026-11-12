@@ -10,17 +10,18 @@ add_action( 'wp_ajax_cc_load_more', 'cc_ajax_load_more_handler' );
 add_action( 'wp_ajax_nopriv_cc_load_more', 'cc_ajax_load_more_handler' );
 
 function cc_ajax_load_more_handler() {
-    $paged     = isset( $_POST['page'] ) ? intval( $_POST['page'] ) + 1 : 1;
-    $post_type_raw = isset( $_POST['post_type'] ) ? sanitize_text_field( $_POST['post_type'] ) : 'post';
+    $paged              = isset( $_POST['page'] ) ? intval( $_POST['page'] ) + 1 : 1;
+    $post_type_raw      = isset( $_POST['post_type'] ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : 'post';
     $allowed_post_types = array( 'post', 'testimoni' );
-    $post_type = in_array( $post_type_raw, $allowed_post_types, true ) ? $post_type_raw : 'post';
-    $orderby   = isset( $_POST['orderby'] ) ? sanitize_text_field( $_POST['orderby'] ) : 'date';
-    $exclude   = isset( $_POST['exclude'] ) ? intval( $_POST['exclude'] ) : 0;
+    $post_type          = in_array( $post_type_raw, $allowed_post_types, true ) ? $post_type_raw : 'post';
+    $orderby            = isset( $_POST['orderby'] ) ? sanitize_text_field( wp_unslash( $_POST['orderby'] ) ) : 'date';
+    $exclude            = isset( $_POST['exclude'] ) ? intval( $_POST['exclude'] ) : 0;
+    $cat                = isset( $_POST['cat'] ) ? intval( $_POST['cat'] ) : 0;
+    $ppp_raw            = isset( $_POST['ppp'] ) ? intval( $_POST['ppp'] ) : 0;
 
-    // Pastikan PPP (Posts Per Page) konsisten dengan halaman utama (home.php)
-    // yaitu 1 feature + 9 grid = 10 total di halaman pertama.
-    // Jika post_type adalah testimoni, default bisa tetap 9 atau disesuaikan.
-    $ppp = ( 'testimoni' === $post_type ) ? 9 : 10;
+    // Pastikan PPP (Posts Per Page) konsisten dengan halaman pemanggil
+    $default_ppp = ( 'testimoni' === $post_type ) ? 9 : 10;
+    $ppp         = ( $ppp_raw > 0 ) ? min( 20, $ppp_raw ) : $default_ppp;
 
     $args = array(
         'post_type'      => $post_type,
@@ -28,6 +29,10 @@ function cc_ajax_load_more_handler() {
         'paged'          => $paged,
         'post_status'    => 'publish',
     );
+
+    if ( $cat > 0 && 'post' === $post_type ) {
+        $args['cat'] = $cat;
+    }
 
     if ( $exclude ) {
         $args['post__not_in'] = array( $exclude );

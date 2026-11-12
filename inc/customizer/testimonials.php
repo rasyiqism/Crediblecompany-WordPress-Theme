@@ -8,9 +8,9 @@
 add_action( 'customize_register', function( $wp_customize ) {
 
     $wp_customize->add_section( 'cc_testimonials_section', array(
-        'title'    => __( 'Pengaturan Testimoni', 'crediblecompany' ),
+        'title'    => __( '6. Testimoni', 'crediblecompany' ),
         'panel'    => 'cc_homepage_panel',
-        'priority' => 45,
+        'priority' => 60,
     ) );
 
     // Judul Testimoni
