@@ -20,6 +20,7 @@
                 const exclude = btn.getAttribute('data-exclude') || 0;
                 const cat = btn.getAttribute('data-cat') || 0;
                 const ppp = btn.getAttribute('data-ppp') || 0;
+                const search = btn.getAttribute('data-search') || '';
 
                 // Tentukan target container berdasar ID tombol atau konteks
                 let targetContainer = document.getElementById('ajax-feed-container');
@@ -43,6 +44,7 @@
                 formData.append('exclude', exclude);
                 if (cat) formData.append('cat', cat);
                 if (ppp) formData.append('ppp', ppp);
+                if (search) formData.append('s', search);
 
                 fetch(ccAjax.ajaxurl, {
                     method: 'POST',
