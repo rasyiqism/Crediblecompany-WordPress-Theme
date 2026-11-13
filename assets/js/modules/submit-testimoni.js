@@ -157,12 +157,15 @@
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
 
-                if (!hiddenPhoto.value) {
+                const hasExistingPhoto = hiddenPhoto && hiddenPhoto.getAttribute('data-existing-photo') === 'true';
+
+                if (!hiddenPhoto.value && !hasExistingPhoto) {
                     alert('Mohon pilih dan potong foto profil Anda terlebih dahulu.');
                     return;
                 }
 
                 const submitBtn = form.querySelector('[type="submit"]');
+                const origSubmitText = submitBtn ? submitBtn.textContent : 'Kirim Ulasan';
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Memproses...';
@@ -178,7 +181,7 @@
                         alert('Terjadi kesalahan keamanan. Silakan refresh halaman dan coba lagi.');
                         if (submitBtn) {
                             submitBtn.disabled = false;
-                            submitBtn.textContent = 'Kirim Ulasan';
+                            submitBtn.textContent = origSubmitText;
                         }
                     });
             });

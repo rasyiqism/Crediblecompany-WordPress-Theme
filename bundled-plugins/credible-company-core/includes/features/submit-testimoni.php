@@ -40,6 +40,16 @@ function cc_handle_submit_testimoni() {
         wp_die( 'Sesi keamanan tidak valid atau kedaluwarsa. Silakan refresh halaman dan coba lagi.', 'Akses Ditolak', array( 'response' => 403 ) );
     }
 
+    $edit_post_id = isset( $_POST['edit_post_id'] ) ? intval( $_POST['edit_post_id'] ) : 0;
+    $is_edit      = false;
+
+    if ( $edit_post_id > 0 ) {
+        $existing_post = get_post( $edit_post_id );
+        if ( $existing_post && 'testimoni' === $existing_post->post_type ) {
+            $is_edit = true;
+        }
+    }
+
     $name         = isset( $_POST['client_name'] ) ? sanitize_text_field( wp_unslash( $_POST['client_name'] ) ) : '';
     $title        = isset( $_POST['client_title'] ) ? sanitize_text_field( wp_unslash( $_POST['client_title'] ) ) : '';
     $city         = isset( $_POST['client_city'] ) ? sanitize_text_field( wp_unslash( $_POST['client_city'] ) ) : '';
@@ -50,18 +60,30 @@ function cc_handle_submit_testimoni() {
 
     $referer = wp_get_referer() ? wp_get_referer() : home_url();
 
-    if ( empty( $name ) || empty( $title ) || empty( $city ) || $rating_raw < 1 || empty( $review ) || empty( $base64_photo ) ) {
+    // Validasi data wajib (jika mode edit dan sudah punya foto, upload foto baru bersifat opsional)
+    $photo_required = ( ! $is_edit || ( $is_edit && ! has_post_thumbnail( $edit_post_id ) ) );
+    if ( empty( $name ) || empty( $title ) || empty( $city ) || $rating_raw < 1 || empty( $review ) || ( $photo_required && empty( $base64_photo ) ) ) {
         wp_safe_redirect( add_query_arg( 'err', '1', $referer ) );
         exit;
     }
 
-    // Buat Postingan Testimoni "Menunggu Peninjauan" (Pending)
-    $post_id = wp_insert_post( array(
-        'post_title'   => $name,
-        'post_content' => $review,
-        'post_status'  => 'pending',
-        'post_type'    => 'testimoni',
-    ) );
+    if ( $is_edit ) {
+        // Mode Edit: Update postingan yang ada & UBAH STATUS MENJADI PENDING (ditangguhkan kembali)
+        $post_id = wp_update_post( array(
+            'ID'           => $edit_post_id,
+            'post_title'   => $name,
+            'post_content' => $review,
+            'post_status'  => 'pending', // DITANGGUHKAN LAGI MESKI SEBELUMNYA SUDAH PUBLISH
+        ) );
+    } else {
+        // Mode Baru: Buat postingan testimoni pending
+        $post_id = wp_insert_post( array(
+            'post_title'   => $name,
+            'post_content' => $review,
+            'post_status'  => 'pending',
+            'post_type'    => 'testimoni',
+        ) );
+    }
 
     if ( $post_id ) {
         // 1. Simpan ke meta key canonical tema (_customer_*) - Digunakan untuk Kolom Admin & Kartu Testimoni
@@ -152,7 +174,8 @@ function cc_handle_submit_testimoni() {
         }
 
         // redirect ke asal dg url arg status=berhasil
-        wp_safe_redirect( add_query_arg( 'success', 'true', $referer ) );
+        $redirect_url = $is_edit ? add_query_arg( 'success', 'updated', site_url( '/submit-testimoni/' ) ) : add_query_arg( 'success', 'true', $referer );
+        wp_safe_redirect( $redirect_url );
         exit;
     } else {
         wp_die( 'Gagal menyimpan data ke Sistem.' );

@@ -26,6 +26,7 @@ require_once $_cc_inc . 'breadcrumbs.php';
 require_once $_cc_inc . 'toc-generator.php';
 require_once $_cc_inc . 'custom-comments.php';
 require_once $_cc_inc . 'ajax-loadmore.php';
+require_once $_cc_inc . 'testimoni-edit-handler.php';
 
 // Customizer (semua panel & settings)
 require_once $_cc_inc . 'customizer/loader.php';

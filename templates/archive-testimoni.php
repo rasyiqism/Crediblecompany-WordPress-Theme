@@ -109,6 +109,32 @@ get_header(); ?>
 .app-testi-reset-link:hover {
     text-decoration: underline;
 }
+.btn-card-edit-testi {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.btn-card-edit-testi:hover {
+    background: var(--brand-red, #c01314);
+    border-color: var(--brand-red, #c01314);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(192, 19, 20, 0.25);
+    transform: translateY(-1px);
+}
 .app-action-row {
     grid-column: 1 / -1 !important;
     display: flex !important;

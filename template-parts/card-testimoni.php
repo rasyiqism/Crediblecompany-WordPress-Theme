@@ -18,7 +18,16 @@ if ( ! $name ) $name = get_the_title();
 $is_link = isset( $args['is_link'] ) ? $args['is_link'] : false;
 ?>
 
-<div class="testimonial-card">
+<div class="testimonial-card" style="position: relative;">
+    <!-- Tombol Edit Ulasan / Ganti Foto -->
+    <a href="<?php echo esc_url( add_query_arg( 'edit', get_the_ID(), site_url( '/submit-testimoni/' ) ) ); ?>" 
+       class="btn-card-edit-testi" 
+       title="Edit ulasan atau ganti foto"
+       onclick="event.stopPropagation();">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        <span>Edit</span>
+    </a>
+
     <?php if ( $is_link ) : ?>
         <a href="<?php the_permalink(); ?>" class="testi-card-link-wrapper">
     <?php endif; ?>

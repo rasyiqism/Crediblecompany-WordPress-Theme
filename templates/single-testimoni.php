@@ -122,6 +122,12 @@ get_header(); ?>
                             } ?>
                         </div>
                         <span class="profile-date"><?php echo get_the_date(); ?></span>
+                        <div style="margin-top: 14px;">
+                            <a href="<?php echo esc_url( add_query_arg( 'edit', get_the_ID(), site_url( '/submit-testimoni/' ) ) ); ?>" class="btn-single-edit-testi" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; color: #475569; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.2s ease;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                <span>Edit Ulasan / Ganti Foto</span>
+                            </a>
+                        </div>
                     </div>
 
                     <div class="app-article-body testi-full-content">
