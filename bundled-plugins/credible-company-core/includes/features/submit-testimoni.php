@@ -89,47 +89,61 @@ function cc_handle_submit_testimoni() {
                     $image_info = ( false !== $image_data ) ? @getimagesizefromstring( $image_data ) : false;
 
                     if ( false !== $image_data && false !== $image_info ) {
-                        // Simpan sementara di folder uploads WordPress
-                        $wp_upload_dir = wp_upload_dir();
-                        $temp_dir      = $wp_upload_dir['path'];
+                        // Sediakan library WordPress
+                        require_once ABSPATH . 'wp-admin/includes/image.php';
+                        require_once ABSPATH . 'wp-admin/includes/file.php';
+                        require_once ABSPATH . 'wp-admin/includes/media.php';
 
-                        // Buat file sementara
-                        $temp_name = 'testimoni_' . uniqid() . '.' . $image_ext;
-                        $temp_path = $temp_dir . '/' . $temp_name;
+                        // Gunakan direktori temporary sistem (bukan folder upload publik)
+                        $temp_file = wp_tempnam( 'testi_' );
 
-                        if ( file_put_contents( $temp_path, $image_data ) !== false ) {
-                            // Sediakan library WordPress
-                            require_once ABSPATH . 'wp-admin/includes/image.php';
-                            require_once ABSPATH . 'wp-admin/includes/file.php';
-                            require_once ABSPATH . 'wp-admin/includes/media.php';
+                        if ( $temp_file && file_put_contents( $temp_file, $image_data ) !== false ) {
+                            // Buat nama file deskriptif berdasarkan nama pelanggan untuk mencegah bentrokan nama
+                            $name_slug = sanitize_title( $name );
+                            if ( empty( $name_slug ) ) {
+                                $name_slug = 'pelanggan';
+                            }
+                            $unique_suffix  = wp_generate_password( 6, false, false );
+                            $final_filename = 'foto-testimoni-' . $name_slug . '-' . $unique_suffix . '.webp';
 
-                            // Coba convert gambar ke webp secara on-the-fly demi optimalisasi ukuran
-                            $editor = wp_get_image_editor( $temp_path );
+                            $upload_target = $temp_file;
+
+                            // Coba konversi gambar ke WebP demi optimalisasi ukuran
+                            $editor = wp_get_image_editor( $temp_file );
                             if ( ! is_wp_error( $editor ) ) {
                                 $editor->set_quality( 80 );
-                                $tmp_webp = $temp_dir . '/' . wp_unique_filename( $temp_dir, 'converted.webp' );
-                                $saved    = $editor->save( $tmp_webp, 'image/webp' );
+                                $webp_temp = wp_tempnam( 'webp_' );
+                                $saved     = $editor->save( $webp_temp, 'image/webp' );
                                 if ( ! is_wp_error( $saved ) ) {
-                                    // Hapus file jpeg/png sementara, ganti dengan webp
-                                    @unlink( $temp_path );
-                                    $temp_path = $saved['path'];
-                                    $temp_name = basename( $temp_path );
+                                    @unlink( $temp_file );
+                                    $upload_target = $saved['path'];
+                                } else {
+                                    @unlink( $webp_temp );
+                                    // Fallback ke ekstensi asli jika konversi WebP gagal
+                                    $final_filename = 'foto-testimoni-' . $name_slug . '-' . $unique_suffix . '.' . $image_ext;
                                 }
+                            } else {
+                                $final_filename = 'foto-testimoni-' . $name_slug . '-' . $unique_suffix . '.' . $image_ext;
                             }
 
-                            // Kirim ke media library
+                            // Kirim ke media library dengan judul deskriptif
                             $file_array = array(
-                                'name'     => $temp_name,
-                                'tmp_name' => $temp_path,
+                                'name'     => $final_filename,
+                                'tmp_name' => $upload_target,
                             );
 
-                            $attachment_id = media_handle_sideload( $file_array, $post_id );
+                            $attachment_data = array(
+                                'post_title' => 'Foto Testimoni - ' . sanitize_text_field( $name ),
+                            );
+
+                            $attachment_id = media_handle_sideload( $file_array, $post_id, null, $attachment_data );
 
                             if ( ! is_wp_error( $attachment_id ) ) {
                                 set_post_thumbnail( $post_id, $attachment_id );
+                                update_post_meta( $attachment_id, '_wp_attachment_image_alt', 'Foto Testimoni ' . sanitize_text_field( $name ) );
                             } else {
                                 // Hapus file sisa jika sideload gagal
-                                @unlink( $temp_path );
+                                @unlink( $upload_target );
                             }
                         }
                     }

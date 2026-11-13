@@ -3,7 +3,7 @@
  * Plugin Name:       Credible Company Core
  * Plugin URI:        https://crediblemark.com/
  * Description:       Plugin pendamping resmi untuk tema Credible Company. Mengelola Custom Post Types (Testimoni, Paket Jasa, Marketing), Dynamic WhatsApp, Post Views, Submit Testimoni, serta modul SEO, Keamanan, dan Performa.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Credible Company
  * Text Domain:       crediblecompany
  * Requires at least: 6.0
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'CC_CORE_ACTIVE', true );
-define( 'CC_CORE_VERSION', '1.0.0' );
+define( 'CC_CORE_VERSION', '1.0.1' );
 define( 'CC_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CC_CORE_URL', plugin_dir_url( __FILE__ ) );
 

@@ -183,5 +183,11 @@
                     });
             });
         }
+        // Reset input foto jika halaman dimuat dari cache navigasi browser (bfcache)
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                resetUploadUI();
+            }
+        });
     });
 })();
