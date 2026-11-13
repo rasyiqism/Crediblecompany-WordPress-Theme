@@ -70,7 +70,7 @@ $thumb_url  = $has_thumb ? get_the_post_thumbnail_url( $edit_id, 'medium' ) : ''
             <div class="form-instruction-side">
                 <div class="instruction-card">
                     <div class="instruction-icon">
-                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11_a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     </div>
                     <h2><?php echo $is_edit ? 'Perbarui Pengalaman Anda' : 'Mengapa ulasan Anda berharga?'; ?></h2>
                     <p><?php echo $is_edit ? 'Pastikan data dan foto yang Anda kirimkan sudah sesuai agar memudahkan admin memverifikasi pembaruan Anda.' : 'Ulasan jujur Anda membantu kami terus tumbuh dan memberikan layanan terbaik bagi Anda dan pelanggan lainnya.'; ?></p>

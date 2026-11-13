@@ -145,18 +145,28 @@ add_filter( 'template_include', 'cc_resolve_template' );
 function cc_resolve_template( $template ) {
     $dir = get_template_directory() . '/templates/';
 
-    // Jika ini adalah page dan memiliki custom template, prioritaskan custom template tersebut
+    // Jika ini adalah page dan memiliki custom template, prioritaskan template di folder /templates/ lebih dulu
     if ( is_page() ) {
         $custom_template = get_page_template_slug();
         if ( $custom_template ) {
-            $custom_template_path = get_stylesheet_directory() . '/' . $custom_template;
-            if ( file_exists( $custom_template_path ) ) {
-                return $custom_template_path;
+            $normalized_template = ltrim( $custom_template, '/' );
+            if ( strpos( $normalized_template, 'templates/' ) === false ) {
+                $candidates = array(
+                    get_stylesheet_directory() . '/templates/' . $normalized_template,
+                    get_template_directory() . '/templates/' . $normalized_template,
+                    get_stylesheet_directory() . '/' . $normalized_template,
+                    get_template_directory() . '/' . $normalized_template,
+                );
+            } else {
+                $candidates = array(
+                    get_stylesheet_directory() . '/' . $normalized_template,
+                    get_template_directory() . '/' . $normalized_template,
+                );
             }
-            if ( strpos( $custom_template, 'templates/' ) === false ) {
-                $subfolder_path = get_stylesheet_directory() . '/templates/' . $custom_template;
-                if ( file_exists( $subfolder_path ) ) {
-                    return $subfolder_path;
+
+            foreach ( $candidates as $candidate ) {
+                if ( file_exists( $candidate ) ) {
+                    return $candidate;
                 }
             }
         }
