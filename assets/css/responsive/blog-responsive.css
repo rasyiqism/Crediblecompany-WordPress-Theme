@@ -152,6 +152,7 @@
 
     .form-container-app,
     .app-action-row,
+    .app-testi-search-wrapper,
     .archive-grid-override {
         grid-column: 1 / -1;
         display: block !important;

@@ -11,20 +11,30 @@ get_header(); ?>
 <style>
 /* Inline styling to ensure immediate render bypassing CDN caches */
 .app-testi-search-wrapper {
-    margin-bottom: 20px;
-    width: 100%;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto 16px auto !important;
+    padding: 10px 20px 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
 }
 .app-testi-search-form {
     position: relative;
     display: flex;
     align-items: center;
     width: 100%;
+    max-width: 580px;
+    margin: 0 auto;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
     border-radius: 9999px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     transition: all 0.2s ease;
     overflow: hidden;
+    box-sizing: border-box;
 }
 .app-testi-search-form:focus-within {
     border-color: var(--brand-red, #c01314);
@@ -77,13 +87,16 @@ get_header(); ?>
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 10px;
+    width: 100%;
+    max-width: 580px;
+    margin: 10px auto 0 auto;
     padding: 10px 16px;
     background: #fff5f5;
     border: 1px solid #fed7d7;
     border-radius: 10px;
     font-size: 0.875rem;
     color: #2d3748;
+    box-sizing: border-box;
 }
 .app-testi-reset-link {
     color: var(--brand-red, #c01314);
@@ -95,6 +108,14 @@ get_header(); ?>
 }
 .app-testi-reset-link:hover {
     text-decoration: underline;
+}
+.app-action-row {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 auto 24px auto !important;
 }
 </style>
 
