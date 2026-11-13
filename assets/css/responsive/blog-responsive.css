@@ -173,20 +173,21 @@
         padding: 0;
     }
 
-    .testi-related-grid,
-    .testimonials-grid.archive-grid-override {
+    .testi-related-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
+        grid-template-columns: 1fr;
+        gap: 20px;
         width: 100%;
         margin-top: 10px;
     }
 
     /* Archive: 3 kolom di desktop */
     .testimonials-grid.archive-grid-override {
+        display: grid !important;
         grid-template-columns: repeat(3, 1fr);
         gap: 24px;
-        display: grid !important;
+        width: 100%;
+        margin-top: 10px;
     }
 
     /* Submit Testimoni Split Layout */
