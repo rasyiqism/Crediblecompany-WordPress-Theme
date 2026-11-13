@@ -26,6 +26,12 @@ $check_svg = '<svg class="check-icon" fill="none" stroke="currentColor" viewBox=
         <div class="pricing-header text-center">
             <h2><?php echo esc_html( cc_dynamic_text( $section_title ) ); ?></h2>
             <p><?php echo esc_html( $section_subtitle ); ?></p>
+            <?php
+            $pricing_page_url = function_exists( 'cc_get_key_page_url' ) ? cc_get_key_page_url( 'pricing' ) : '#daftar-paket';
+            if ( false === strpos( $pricing_page_url, '#daftar-paket' ) ) :
+            ?>
+                <p><a href="<?php echo esc_url( $pricing_page_url ); ?>" class="btn btn-outline"><?php esc_html_e( 'Lihat Halaman Paket & Harga', 'crediblecompany' ); ?></a></p>
+            <?php endif; ?>
         </div>
 
         <?php 
@@ -56,8 +62,20 @@ $check_svg = '<svg class="check-icon" fill="none" stroke="currentColor" viewBox=
                                 <?php if ( $badge ) : ?>
                                     <span class="price-card-badge"><?php echo esc_html( $badge ); ?></span>
                                 <?php endif; ?>
-                                <img src="<?php echo esc_url( $paket_image ); ?>" alt="<?php the_title(); ?>" class="price-card-poster">
+                                <img src="<?php echo esc_url( $paket_image ); ?>" alt="<?php the_title_attribute(); ?>" class="price-card-poster">
                             </div>
+
+                            <?php if ( $price || $eksemplar ) : ?>
+                                <div class="price-card-body">
+                                    <h3 class="price-card-name"><?php the_title(); ?></h3>
+                                    <?php if ( $price ) : ?>
+                                        <p class="price-current"><?php echo esc_html( $price ); ?></p>
+                                    <?php endif; ?>
+                                    <?php if ( $eksemplar ) : ?>
+                                        <p class="price-eksemplar"><?php echo esc_html( $eksemplar ); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
 
                             <!-- Tombol CTA -->
                             <div class="price-card-action">

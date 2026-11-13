@@ -19,6 +19,7 @@ $_cc_inc = get_template_directory() . '/inc/';
 
 // Utilitas & asset
 require_once $_cc_inc . 'helpers.php';
+require_once $_cc_inc . 'agent-ready.php';
 require_once $_cc_inc . 'enqueue.php';
 require_once $_cc_inc . 'breadcrumbs.php';
 

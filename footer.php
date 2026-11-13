@@ -70,15 +70,29 @@
             </div>
         </div>
 
-        <!-- Row 2: Alamat (White BG) -->
+        <!-- Row 2: Alamat & Kontak Machine-Readable (White BG) -->
         <div class="footer-middle">
             <div class="container container--narrow">
-                <?php $footer_address = cc_get( 'footer_address', 'Kantor : Paingan, (Halaman Masjid Ash Sholihin), Maguwoharjo, Depok, Sleman, Daerah Istimewa Yogyakarta.' ); ?>
+                <?php
+                $footer_address = cc_get_company_address();
+                $company_email  = cc_get_company_email();
+                $company_phone  = cc_get_company_phone();
+                $company_tel    = cc_get_company_phone_tel();
+                ?>
                 <?php if ( ! empty( $footer_address ) ) : ?>
-                    <p class="footer-address-text">
+                    <address class="footer-address-text">
                         <?php echo nl2br( esc_html( $footer_address ) ); ?>
-                    </p>
+                    </address>
                 <?php endif; ?>
+                <div class="footer-contact-links">
+                    <a href="<?php echo esc_url( 'mailto:' . $company_email ); ?>" class="footer-contact-link">
+                        <?php echo esc_html( $company_email ); ?>
+                    </a>
+                    <span class="footer-contact-sep" aria-hidden="true">•</span>
+                    <a href="<?php echo esc_url( 'tel:' . $company_tel ); ?>" class="footer-contact-link">
+                        <?php echo esc_html( $company_phone ); ?>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -86,18 +100,40 @@
         <div class="footer-bottom">
             <div class="container footer-flex">
                 <!-- Footer Links -->
-                <ul class="footer-nav" style="list-style: none; margin: 0; padding: 0;">
+                <ul class="footer-nav">
                     <?php
+                    $menu_html = '';
                     if ( has_nav_menu( 'footer_navigation' ) ) {
-                        wp_nav_menu( array(
+                        $menu_html = wp_nav_menu( array(
                             'theme_location' => 'footer_navigation',
                             'container'      => false,
                             'items_wrap'     => '%3$s',
                             'depth'          => 1,
                             'fallback_cb'    => false,
+                            'echo'           => false,
                         ) );
-                    } else {
-                        echo '<li><a href="#">About Us</a></li>';
+                        echo $menu_html;
+                    }
+
+                    // Pastikan halaman Tentang, Harga, Kontak, Syarat & Ketentuan, dan Privasi selalu tertaut.
+                    $required_footer_links = array(
+                        'about'   => array( 'label' => __( 'Tentang Kami', 'crediblecompany' ), 'url' => cc_get_key_page_url( 'about' ), 'rel' => '' ),
+                        'pricing' => array( 'label' => __( 'Paket Harga', 'crediblecompany' ), 'url' => cc_get_key_page_url( 'pricing' ), 'rel' => '' ),
+                        'contact' => array( 'label' => __( 'Kontak', 'crediblecompany' ), 'url' => cc_get_key_page_url( 'contact' ), 'rel' => '' ),
+                        'terms'   => array( 'label' => __( 'Syarat & Ketentuan', 'crediblecompany' ), 'url' => cc_get_key_page_url( 'terms' ), 'rel' => '' ),
+                        'privacy' => array( 'label' => __( 'Kebijakan Privasi', 'crediblecompany' ), 'url' => cc_get_key_page_url( 'privacy' ), 'rel' => 'privacy-policy' ),
+                    );
+
+                    foreach ( $required_footer_links as $item ) {
+                        $item_path = trim( (string) wp_parse_url( $item['url'], PHP_URL_PATH ), '/' );
+                        $already   = ! empty( $menu_html ) && (
+                            false !== stripos( $menu_html, $item['url'] ) ||
+                            ( '' !== $item_path && false !== stripos( $menu_html, '/' . $item_path ) )
+                        );
+                        if ( ! $already ) {
+                            $rel_attr = ! empty( $item['rel'] ) ? ' rel="' . esc_attr( $item['rel'] ) . '"' : '';
+                            echo '<li><a href="' . esc_url( $item['url'] ) . '"' . $rel_attr . '>' . esc_html( $item['label'] ) . '</a></li>';
+                        }
                     }
                     ?>
                 </ul>

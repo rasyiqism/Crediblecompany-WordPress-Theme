@@ -16,6 +16,7 @@
  * │ modules/share-btn.js        │ Web Share API + clipboard fallback   │ Single post & single testimoni  │
  * │ modules/load-more.js        │ AJAX load more posts/testimoni       │ Home, archive, single testimoni │
  * │ modules/submit-testimoni.js │ Form validator + AJAX nonce fetch    │ Page template submit-testimoni  │
+ * │ modules/webmcp-tools.js     │ WebMCP tool registration             │ Semua halaman (global)          │
  * └─────────────────────────────┴──────────────────────────────────────┴─────────────────────────────────┘
  *
  * KONVENSI:

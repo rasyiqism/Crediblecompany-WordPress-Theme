@@ -151,8 +151,33 @@
 .footer-address-text {
     font-size: 0.95rem;
     font-weight: 500;
+    font-style: normal;
     margin: 0;
     line-height: 1.5;
+}
+
+.footer-contact-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.925rem;
+    font-weight: 600;
+}
+
+.footer-contact-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footer-contact-link:hover {
+    text-decoration: underline;
+}
+
+.footer-contact-sep {
+    opacity: 0.5;
 }
 
 /* --- Row 3: Bottom (Red BG) --- */
@@ -165,7 +190,11 @@
 
 .footer-nav {
     display: flex;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.75rem 1.5rem;
 }
 
 .footer-nav a {

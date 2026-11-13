@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'CC_CORE_PLUGIN_SLUG', 'credible-company-core/credible-company-core.php' );
 define( 'CC_CORE_PLUGIN_ZIP', get_template_directory() . '/bundled-plugins/credible-company-core.zip' );
+define( 'CC_CORE_BUNDLED_VERSION', '1.0.3' );
 
 /**
  * Cek apakah plugin pendamping sudah terpasang di wp-content/plugins/.
@@ -54,6 +55,15 @@ function cc_core_plugin_admin_notice() {
         if ( isset( $_GET['cc_core_status'] ) && 'activated' === $_GET['cc_core_status'] ) {
             echo '<div class="notice notice-success is-dismissible"><p>';
             esc_html_e( 'Plugin Credible Company Core berhasil dipasang dan diaktifkan.', 'crediblecompany' );
+            echo '</p></div>';
+        } elseif ( defined( 'CC_CORE_VERSION' ) && version_compare( CC_CORE_VERSION, CC_CORE_BUNDLED_VERSION, '<' ) && current_user_can( 'update_plugins' ) ) {
+            echo '<div class="notice notice-info is-dismissible"><p>';
+            printf(
+                /* translators: 1: active version, 2: bundled version */
+                esc_html__( 'Pembaruan plugin Credible Company Core tersedia (%1$s → %2$s) di folder tema bundled-plugins/credible-company-core.zip.', 'crediblecompany' ),
+                esc_html( CC_CORE_VERSION ),
+                esc_html( CC_CORE_BUNDLED_VERSION )
+            );
             echo '</p></div>';
         }
         return;

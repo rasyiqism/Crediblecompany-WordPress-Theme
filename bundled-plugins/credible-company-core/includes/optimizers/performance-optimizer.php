@@ -93,12 +93,18 @@ function cc_stop_heartbeat() {
 // Minifikasi HTML (Menghilangkan Whitespace tak perlu tanpa merusak script/style/pre/textarea)
 add_action( 'get_header', 'cc_start_html_minify' );
 function cc_start_html_minify() {
-    if ( ! is_admin() ) {
+    $is_markdown = function_exists( 'cc_is_markdown_request' ) && cc_is_markdown_request();
+    if ( ! is_admin() && ! $is_markdown ) {
         ob_start( 'cc_minify_html_output' );
     }
 }
 function cc_minify_html_output( $buffer ) {
     if ( is_admin() || empty( $buffer ) ) {
+        return $buffer;
+    }
+    // Jangan sentuh output non-HTML (mis. XML, JSON, Markdown)
+    $trimmed = ltrim( $buffer );
+    if ( 0 !== stripos( $trimmed, '<!doctype' ) && 0 !== stripos( $trimmed, '<html' ) ) {
         return $buffer;
     }
 
@@ -233,7 +239,17 @@ add_action( 'template_redirect', 'cc_auto_page_cache_start', 20 );
 function cc_auto_page_cache_start() {
     $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
-    // Jangan cache untuk user login, admin, non-GET, AJAX, REST, preview, 404, feed, search, atau halaman submit testimoni
+    // Jangan cache untuk user login, admin, non-GET, AJAX, REST, preview, 404, feed, search, markdown, sitemap, llms.txt, atau .well-known
+    $raw_uri     = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+    $req_path    = trim( (string) wp_parse_url( $raw_uri, PHP_URL_PATH ), '/' );
+    $is_markdown = function_exists( 'cc_is_markdown_request' ) && cc_is_markdown_request();
+    $is_machine  = $is_markdown
+        || get_query_var( 'cc_sitemap' )
+        || get_query_var( 'cc_llms_txt' )
+        || get_query_var( 'cc_mcp_card' )
+        || 0 === strpos( $req_path, '.well-known/' )
+        || preg_match( '/\.(xml|txt|json|md)$/i', $req_path );
+
     if (
         'GET' !== $method ||
         is_user_logged_in() ||
@@ -246,6 +262,7 @@ function cc_auto_page_cache_start() {
         is_404() ||
         is_feed() ||
         is_search() ||
+        $is_machine ||
         isset( $_GET['ref'] ) ||
         is_page_template( 'templates/page-submit-testimoni.php' ) ||
         is_page_template( 'page-submit-testimoni.php' )
@@ -257,9 +274,9 @@ function cc_auto_page_cache_start() {
     $marketer_cookie = defined( 'CC_MARKETER_COOKIE' ) ? CC_MARKETER_COOKIE : 'cc_marketer_ref';
     $marketer_id     = isset( $_COOKIE[ $marketer_cookie ] ) ? intval( $_COOKIE[ $marketer_cookie ] ) : 0;
     $device_key      = wp_is_mobile() ? 'mob' : 'desk';
+    $host_key        = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) ) : '';
 
     // Normalisasi URI: hapus parameter tracking (utm_*, fbclid, gclid) agar cache tidak membengkak
-    $raw_uri    = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
     $parsed_uri = wp_parse_url( $raw_uri );
     $path       = isset( $parsed_uri['path'] ) ? $parsed_uri['path'] : '/';
     $query_str  = '';
@@ -276,8 +293,8 @@ function cc_auto_page_cache_start() {
         }
     }
 
-    // Cache key dikombinasikan dengan ID marketer aktif dan device type
-    $cache_key  = md5( $path . $query_str . '_' . $marketer_id . '_' . $device_key );
+    // Cache key dikombinasikan dengan host, ID marketer aktif, dan device type
+    $cache_key  = md5( $host_key . '|' . $path . $query_str . '_' . $marketer_id . '_' . $device_key );
     $cache_file = $cache_dir . $cache_key . '.html';
 
     // Buat folder jika belum ada

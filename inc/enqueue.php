@@ -78,6 +78,30 @@ add_action( 'wp_enqueue_scripts', function () {
         true
     );
 
+    // WebMCP Tools (global — exposes navigator.modelContext tools on page load)
+    wp_enqueue_script(
+        'cc-webmcp-tools',
+        $theme_uri . '/assets/js/modules/webmcp-tools.js',
+        array(),
+        $theme_version,
+        true
+    );
+    if ( function_exists( 'cc_get_publishing_packages_data' ) ) {
+        wp_localize_script( 'cc-webmcp-tools', 'ccWebMcpData', array(
+            'mcpEndpoint'   => rest_url( 'crediblecompany/v1/mcp' ),
+            'searchRestUrl' => rest_url( 'wp/v2/search' ),
+            'packages'      => cc_get_publishing_packages_data(),
+            'faqs'          => cc_get_faqs_data(),
+            'business'      => array(
+                'name'    => get_bloginfo( 'name' ),
+                'email'   => cc_get_company_email(),
+                'phone'   => cc_get_company_phone(),
+                'address' => cc_get_company_address(),
+                'pages'   => cc_get_key_pages_map(),
+            ),
+        ) );
+    }
+
     // FAQ Accordion (landing page)
     if ( is_front_page() || is_home() ) {
         wp_enqueue_script(

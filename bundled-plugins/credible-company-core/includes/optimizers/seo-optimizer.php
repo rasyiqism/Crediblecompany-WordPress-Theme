@@ -116,9 +116,17 @@ function cc_advanced_seo_meta() {
     }
 }
 
-// 3. JSON-LD Schema (Article & Review)
+// 3. JSON-LD Schema (@graph: Organization, LocalBusiness, WebSite, Services/Offers, Products, Articles, Reviews)
+define( 'CC_CORE_AGENT_SCHEMA', true );
 add_action( 'wp_head', 'cc_json_ld_schema', 2 );
 function cc_json_ld_schema() {
+    if ( function_exists( 'cc_build_structured_data_graph' ) ) {
+        $schema = cc_build_structured_data_graph();
+        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
+        echo '<!-- /Advanced SEO Meta -->' . "\n";
+        return;
+    }
+
     if ( is_singular( 'post' ) ) {
         global $post;
         $schema = array(
@@ -135,7 +143,7 @@ function cc_json_ld_schema() {
         if ( has_post_thumbnail() ) {
             $schema['image'] = array( get_the_post_thumbnail_url( $post->ID, 'large' ) );
         }
-        echo '<script type="application/ld+json">' . wp_json_encode( $schema ) . '</script>' . "\n";
+        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
         echo '<!-- /Advanced SEO Meta -->' . "\n";
     } elseif ( is_singular( 'testimoni' ) ) {
         global $post;
@@ -166,7 +174,7 @@ function cc_json_ld_schema() {
             ),
             'reviewBody' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 50, '' ),
         );
-        echo '<script type="application/ld+json">' . wp_json_encode( $schema ) . '</script>' . "\n";
+        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
         echo '<!-- /Advanced SEO Meta -->' . "\n";
     } elseif ( is_front_page() || is_home() ) {
         $same_as = array_values( array_filter( array(
@@ -180,30 +188,44 @@ function cc_json_ld_schema() {
             return ! empty( $u ) && '#' !== $u;
         } ) );
 
-        $schema = array(
-            '@context'      => 'https://schema.org',
-            '@type'         => 'WebSite',
-            'name'          => get_bloginfo( 'name' ),
-            'description'   => get_bloginfo( 'description' ),
-            'url'           => esc_url( home_url( '/' ) ),
-            'potentialAction' => array(
-                '@type'       => 'SearchAction',
-                'target'      => esc_url( home_url( '/' ) ) . '?s={search_term_string}',
-                'query-input' => 'required name=search_term_string',
-            ),
-            'publisher' => array(
-                '@type' => 'Organization',
-                'name'  => get_bloginfo( 'name' ),
-                'logo'  => array(
-                    '@type' => 'ImageObject',
-                    'url'   => has_custom_logo() ? wp_get_attachment_image_url( get_theme_mod( 'custom_logo' ), 'full' ) : get_site_icon_url( 512 ),
-                )
+        $home_url = esc_url_raw( home_url( '/' ) );
+        $org_id   = $home_url . '#organization';
+        $logo_url = has_custom_logo() ? wp_get_attachment_image_url( get_theme_mod( 'custom_logo' ), 'full' ) : get_site_icon_url( 512 );
+
+        $org = array(
+            '@type' => 'Organization',
+            '@id'   => $org_id,
+            'name'  => get_bloginfo( 'name' ),
+            'url'   => $home_url,
+            'logo'  => array(
+                '@type' => 'ImageObject',
+                'url'   => $logo_url,
             ),
         );
         if ( ! empty( $same_as ) ) {
-            $schema['sameAs'] = $same_as;
+            $org['sameAs'] = $same_as;
         }
-        echo '<script type="application/ld+json">' . wp_json_encode( $schema ) . '</script>' . "\n";
+
+        $schema = array(
+            '@context' => 'https://schema.org',
+            '@graph'   => array(
+                $org,
+                array(
+                    '@type'           => 'WebSite',
+                    '@id'             => $home_url . '#website',
+                    'name'            => get_bloginfo( 'name' ),
+                    'description'     => get_bloginfo( 'description' ),
+                    'url'             => $home_url,
+                    'publisher'       => array( '@id' => $org_id ),
+                    'potentialAction' => array(
+                        '@type'       => 'SearchAction',
+                        'target'      => $home_url . '?s={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ),
+                ),
+            ),
+        );
+        echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
         echo '<!-- /Advanced SEO Meta -->' . "\n";
     }
 }
@@ -237,11 +259,36 @@ function cc_sitemap_query_var( $vars ) {
     return $vars;
 }
 
-add_action( 'template_redirect', 'cc_render_sitemap' );
+add_filter( 'redirect_canonical', 'cc_sitemap_disable_trailing_slash' );
+function cc_sitemap_disable_trailing_slash( $redirect_url ) {
+    $raw_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+    $path    = trim( (string) wp_parse_url( $raw_uri, PHP_URL_PATH ), '/' );
+    if ( 'sitemap.xml' === $path ) {
+        return false;
+    }
+    return $redirect_url;
+}
+
+add_action( 'template_redirect', 'cc_render_sitemap', 5 );
 function cc_render_sitemap() {
-    if ( get_query_var( 'cc_sitemap' ) ) {
-        // Output tipe MIME XML
+    $raw_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+    $path    = trim( (string) wp_parse_url( $raw_uri, PHP_URL_PATH ), '/' );
+    if ( get_query_var( 'cc_sitemap' ) || 'sitemap.xml' === $path ) {
+        if ( function_exists( 'cc_render_agent_ready_sitemap' ) ) {
+            cc_render_agent_ready_sitemap();
+            exit;
+        }
+
+        // Standalone fallback jika plugin dipakai tanpa tema CredibleCompany
+        global $wpdb, $wp_query;
+        if ( $wp_query ) {
+            $wp_query->is_404 = false;
+        }
+        status_header( 200 );
         header( 'Content-Type: application/xml; charset=utf-8' );
+
+        $last_gmt     = function_exists( 'get_lastpostmodified' ) ? get_lastpostmodified( 'GMT' ) : '';
+        $site_lastmod = $last_gmt ? wp_date( 'c', strtotime( $last_gmt . ' UTC' ) ) : wp_date( 'c' );
 
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
@@ -249,25 +296,25 @@ function cc_render_sitemap() {
         // Beranda
         echo '  <url>' . "\n";
         echo '    <loc>' . esc_url( home_url( '/' ) ) . '</loc>' . "\n";
+        echo '    <lastmod>' . esc_html( $site_lastmod ) . '</lastmod>' . "\n";
         echo '    <changefreq>daily</changefreq>' . "\n";
         echo '    <priority>1.0</priority>' . "\n";
         echo '  </url>' . "\n";
 
-        // Query Post, Page & Testimoni (Limit untuk skalabilitas)
+        // Query Post, Page & Testimoni (urut berdasarkan terakhir diubah)
         $args = array(
             'post_type'      => array( 'post', 'page', 'testimoni' ),
             'post_status'    => 'publish',
-            'posts_per_page' => 500, // Limit aman untuk sitemap satu file
+            'posts_per_page' => 500,
+            'orderby'        => 'modified',
+            'order'          => 'DESC',
             'fields'         => 'ids',
         );
-        
+
         $posts = get_posts( $args );
         foreach ( $posts as $post_id ) {
-            $post_date = get_the_modified_date( 'c', $post_id );
-            if ( ! $post_date ) {
-                $post_date = get_the_date( 'c', $post_id );
-            }
-            
+            $post_date = get_the_modified_date( 'c', $post_id ) ?: get_the_date( 'c', $post_id );
+
             echo '  <url>' . "\n";
             echo '    <loc>' . esc_url( get_permalink( $post_id ) ) . '</loc>' . "\n";
             echo '    <lastmod>' . esc_html( $post_date ) . '</lastmod>' . "\n";
@@ -276,7 +323,26 @@ function cc_render_sitemap() {
             echo '  </url>' . "\n";
         }
 
-        // Tambah Kategori & Tag
+        // Tambah Kategori & Tag beserta <lastmod>
+        $term_lastmod_map = array();
+        $rows             = $wpdb->get_results(
+            "SELECT tr.term_taxonomy_id, MAX(p.post_modified_gmt) AS latest_mod
+             FROM {$wpdb->term_relationships} tr
+             INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id
+             WHERE p.post_status = 'publish'
+             GROUP BY tr.term_taxonomy_id"
+        );
+        if ( is_array( $rows ) ) {
+            foreach ( $rows as $row ) {
+                if ( ! empty( $row->latest_mod ) && '0000-00-00 00:00:00' !== $row->latest_mod ) {
+                    $ts = strtotime( $row->latest_mod . ' UTC' );
+                    if ( $ts ) {
+                        $term_lastmod_map[ intval( $row->term_taxonomy_id ) ] = wp_date( 'c', $ts );
+                    }
+                }
+            }
+        }
+
         $taxonomies = array( 'category', 'post_tag' );
         foreach ( $taxonomies as $tax ) {
             $terms = get_terms( array(
@@ -289,8 +355,11 @@ function cc_render_sitemap() {
                     if ( is_wp_error( $term_link ) ) {
                         continue;
                     }
+                    $tt_id   = intval( $term->term_taxonomy_id );
+                    $lastmod = isset( $term_lastmod_map[ $tt_id ] ) ? $term_lastmod_map[ $tt_id ] : $site_lastmod;
                     echo '  <url>' . "\n";
                     echo '    <loc>' . esc_url( $term_link ) . '</loc>' . "\n";
+                    echo '    <lastmod>' . esc_html( $lastmod ) . '</lastmod>' . "\n";
                     echo '    <changefreq>weekly</changefreq>' . "\n";
                     echo '    <priority>0.5</priority>' . "\n";
                     echo '  </url>' . "\n";
@@ -326,24 +395,39 @@ function cc_social_share() {
     echo '</div>';
 }
 
-// 7. Robots.txt Optimizer (Instruksi Crawler)
+// 7. Robots.txt Optimizer (Instruksi Crawler + Content-Signal)
 add_filter( 'robots_txt', 'cc_optimize_robots_txt', 10, 2 );
 function cc_optimize_robots_txt( $output, $public ) {
     if ( '0' == $public ) {
         return $output;
     }
-    $sitemap_url = home_url( '/sitemap.xml' );
-    $output .= "\nUser-agent: *\n";
-    $output .= "Disallow: /wp-admin/\n";
-    $output .= "Allow: /wp-admin/admin-ajax.php\n";
-    $output .= "Disallow: /trackback/\n";
-    $output .= "Disallow: /xmlrpc.php\n";
+    $signal = trim( (string) cc_get( 'seo_content_signal', 'search=yes, ai-input=yes, ai-train=no' ) );
+    if ( '' === $signal ) {
+        $signal = 'search=yes, ai-input=yes, ai-train=no';
+    }
+    $directive = 'Content-Signal: ' . $signal;
+
+    if ( false === stripos( $output, 'Content-Signal:' ) ) {
+        if ( preg_match( '/^User-agent:\s*\*/mi', $output ) ) {
+            $output = preg_replace( '/^(User-agent:\s*\*)/mi', "$1\n" . $directive, $output, 1 );
+        } else {
+            $output .= "\nUser-agent: *\n" . $directive . "\n";
+        }
+    }
+
+    $extra_disallow = "\nDisallow: /trackback/\nDisallow: /xmlrpc.php\n";
+    if ( preg_match( '/^Allow:\s*\/wp-admin\/admin-ajax\.php/mi', $output ) ) {
+        $output = preg_replace( '/^(Allow:\s*\/wp-admin\/admin-ajax\.php)/mi', "$1" . $extra_disallow, $output, 1 );
+    } else {
+        $output .= $extra_disallow;
+    }
 
     // AI & Crawler Control (Generative Engine Optimization)
     $output .= "\nUser-agent: GPTBot\nDisallow: /wp-admin/\n";
     $output .= "User-agent: CCBot\nDisallow: /\n"; // Common Crawl seringkali berat
     $output .= "User-agent: PerplexityBot\nDisallow: /wp-admin/\n";
 
+    $sitemap_url = home_url( '/sitemap.xml' );
     $output .= "\nSitemap: " . esc_url( $sitemap_url ) . "\n";
     return $output;
 }
