@@ -9,6 +9,7 @@
  * 1. Base Card & Hover
  * -------------------------------------------------------------------------- */
 .testimonial-card {
+    position: relative;
     background: var(--cc-testimonials-card-bg-color, var(--brand-white));
     color: var(--cc-testimonials-text-color, var(--brand-dark));
     border-radius: var(--radius);
@@ -35,30 +36,60 @@
 
 .btn-card-edit-testi {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 9px;
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px solid #e2e8f0;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #64748b;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    color: var(--gray-400, #94a3b8);
     text-decoration: none;
+    opacity: 0.45;
     z-index: 10;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.btn-card-edit-testi:hover {
-    background: var(--brand-red, #c01314);
-    border-color: var(--brand-red, #c01314);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(192, 19, 20, 0.25);
-    transform: translateY(-1px);
+.testimonial-card:hover .btn-card-edit-testi,
+.btn-card-edit-testi:focus-visible {
+    opacity: 0.85;
+}
+
+.btn-card-edit-testi:hover,
+.btn-card-edit-testi:focus-visible {
+    opacity: 1;
+    background: rgba(241, 245, 249, 0.9);
+    border-color: rgba(148, 163, 184, 0.25);
+    color: var(--brand-red, #c01314);
+}
+
+.single-testi-edit-wrap {
+    margin-top: 10px;
+}
+
+.btn-single-edit-testi {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--gray-500, #64748b);
+    text-decoration: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-single-edit-testi:hover,
+.btn-single-edit-testi:focus-visible {
+    background: rgba(241, 245, 249, 0.85);
+    color: var(--brand-red, #c01314);
 }
 
 /* --------------------------------------------------------------------------
@@ -109,6 +140,7 @@
     font-size: 0.9375rem;
     color: var(--cc-testimonials-text-color, var(--brand-red));
     margin: 0 0 0.125rem 0;
+    padding-right: 1.5rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

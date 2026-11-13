@@ -29,7 +29,7 @@ add_action( 'wp_enqueue_scripts', function () {
         $theme_version
     );
 
-    // Cards component (hub @import → cards/testimonial, blog, featured)
+    // Cards component (hub @import → cards/blog, featured)
     wp_enqueue_style(
         'cc-cards',
         $theme_uri . '/assets/css/components/cards.css',
@@ -37,11 +37,19 @@ add_action( 'wp_enqueue_scripts', function () {
         $theme_version
     );
 
+    // Testimonial card enqueued directly for reliable version cache busting
+    wp_enqueue_style(
+        'cc-testimonial-card',
+        $theme_uri . '/assets/css/components/cards/testimonial-card.css',
+        array( 'cc-cards' ),
+        $theme_version
+    );
+
     // Responsive stylesheet (hub @import → responsive/)
     wp_enqueue_style(
         'cc-responsive',
         $theme_uri . '/assets/css/responsive.css',
-        array( 'cc-cards' ),
+        array( 'cc-testimonial-card' ),
         $theme_version
     );
 
