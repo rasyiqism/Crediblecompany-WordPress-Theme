@@ -7,28 +7,28 @@
  * ========================================================================== */
 
 /* --- Landing Page Responsive (breakpoints section utama) --- */
-@import url('./responsive/landing-responsive.css?v=1.1.44');
+@import url('./responsive/landing-responsive.css?v=2.1.4');
 
 /* --- App-Like Layout (blog & testimoni mobile-first) --- */
-@import url('./responsive/app-layout.css');
+@import url('./responsive/app-layout.css?v=2.1.4');
 
 /* --- Testimoni App Styles (card, single, premium) --- */
-@import url('./responsive/testimoni-app.css');
+@import url('./responsive/testimoni-app.css?v=2.1.4');
 
 /* --- Premium Card Upgrades (Testimoni Card baru) --- */
-@import url('./responsive/premium-cards.css');
+@import url('./responsive/premium-cards.css?v=2.1.4');
 
 /* --- Form Styles (submit, alert, instruction) --- */
-@import url('./responsive/forms.css');
+@import url('./responsive/forms.css?v=2.1.4');
 
 /* --- Modern Comments Section --- */
-@import url('./responsive/comments.css');
+@import url('./responsive/comments.css?v=2.1.4');
 
 /* --- TOC & Sidebar Layout --- */
-@import url('./responsive/toc-sidebar.css');
+@import url('./responsive/toc-sidebar.css?v=2.1.4');
 
 /* --- Blog Responsive & Desktop Overrides --- */
-@import url('./responsive/blog-responsive.css');
+@import url('./responsive/blog-responsive.css?v=2.1.4');
 
 /* --- Mobile-Only Enhancements (drawer, carousel, form) --- */
-@import url('./responsive/mobile-enhancements.css');
+@import url('./responsive/mobile-enhancements.css?v=2.1.4');

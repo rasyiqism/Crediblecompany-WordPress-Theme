@@ -135,6 +135,15 @@ get_header(); ?>
                 </article>
 
                 <!-- Seksi Testimoni Lainnya (Grid with Load More) -->
+                <style>
+                    .testi-related-grid,
+                    .related-testimonials-section .testi-related-grid {
+                        display: grid !important;
+                        grid-template-columns: 1fr !important;
+                        gap: 20px !important;
+                        width: 100% !important;
+                    }
+                </style>
                 <div class="related-testimonials-section premium-carousel-section" style="margin: 60px 0;">
                     <h3 class="section-title-premium">Testimoni Lainnya</h3>
                     <div class="testi-feed-container">
