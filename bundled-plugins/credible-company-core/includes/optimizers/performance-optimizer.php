@@ -347,126 +347,14 @@ function cc_disable_image_sizes( $sizes ) {
 // 2. Menonaktifkan threshold penskalaan gambar besar agar tidak ada versi -scaled
 add_filter( 'big_image_size_threshold', '__return_false' );
 
-// 3. Hapus file resize yang tercatat di metadata jika ukuran tersebut dinonaktifkan via filter
-add_filter( 'wp_generate_attachment_metadata', 'cc_delete_additional_image_sizes' );
-function cc_delete_additional_image_sizes( $metadata ) {
-    return $metadata;
-}
-
-// 7. Menghapus gambar/lampiran terkait secara otomatis ketika postingan dihapus permanen
-add_action( 'before_delete_post', 'cc_delete_associated_images_on_post_delete' );
-function cc_delete_associated_images_on_post_delete( $post_id ) {
-    // Pastikan fungsi berjalan hanya ketika post dihapus secara permanen (bukan revisi)
-    if ( ! wp_is_post_revision( $post_id ) ) {
-        // Ambil semua lampiran yang terkait dengan postingan ini
-        $attachments = get_posts( array(
-            'post_type'      => 'attachment',
-            'posts_per_page' => -1,
-            'post_status'    => 'any',
-            'post_parent'    => $post_id,
-        ) );
-
-        if ( is_array( $attachments ) ) {
-            foreach ( $attachments as $attachment ) {
-                $attachment_id = $attachment->ID;
-
-                // Periksa apakah lampiran ini digunakan oleh postingan lainnya
-                $is_used_elsewhere = cc_check_if_attachment_used_elsewhere( $attachment_id, $post_id );
-
-                if ( ! $is_used_elsewhere ) {
-                    // Hapus lampiran secara permanen dari database dan disk jika tidak dipakai di tempat lain
-                    if ( false === wp_delete_attachment( $attachment_id, true ) ) {
-                        error_log( 'Gagal menghapus lampiran dengan ID: ' . $attachment_id );
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Memeriksa apakah suatu lampiran/gambar digunakan di pos lain (sebagai featured image atau di dalam konten).
- *
- * @param int $attachment_id ID Lampiran.
- * @param int $post_id ID Post yang sedang dihapus.
- * @return bool True jika digunakan di tempat lain, false jika tidak.
- */
-function cc_check_if_attachment_used_elsewhere( $attachment_id, $post_id ) {
-    global $wpdb;
-
-    // 1. Cek penggunaan lampiran sebagai featured image di postingan lain
-    $query = $wpdb->prepare(
-        "SELECT COUNT(*) FROM $wpdb->postmeta WHERE meta_key = '_thumbnail_id' AND meta_value = %d AND post_id != %d",
-        $attachment_id,
-        $post_id
-    );
-    $count_thumbnail = $wpdb->get_var( $query );
-
-    // 2. Cek penggunaan URL/Nama File lampiran di dalam konten postingan lain (lebih akurat daripada ID mentah)
-    $attachment_file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-    $filename        = $attachment_file ? basename( $attachment_file ) : '';
-    $search_term     = $filename ? $filename : $attachment_id;
-
-    $query_content = $wpdb->prepare(
-        "SELECT COUNT(*) FROM $wpdb->posts WHERE post_content LIKE %s AND ID != %d",
-        '%' . $wpdb->esc_like( $search_term ) . '%',
-        $post_id
-    );
-    $count_content = $wpdb->get_var( $query_content );
-
-    return $count_thumbnail > 0 || $count_content > 0;
-}
-
-// 8. Batalkan cron penghapus attachment otomatis (berisiko menghapus gambar di Customizer, Widget, & CPT Meta)
-add_action( 'admin_init', 'cc_unschedule_unsafe_attachment_cleanup' );
+// 3. Cabut seluruh jadwal event cron penghapus attachment (mencegah penghapusan otomatis gambar WooCommerce/Media)
+add_action( 'init', 'cc_unschedule_unsafe_attachment_cleanup' );
 function cc_unschedule_unsafe_attachment_cleanup() {
-    $timestamp = wp_next_scheduled( 'cc_cleanup_unused_attachments_cron' );
-    if ( $timestamp ) {
-        wp_unschedule_event( $timestamp, 'cc_cleanup_unused_attachments_cron' );
+    if ( wp_next_scheduled( 'cc_cleanup_unused_attachments_cron' ) ) {
+        wp_clear_scheduled_hook( 'cc_cleanup_unused_attachments_cron' );
     }
 }
 
-// 9. Konversi Gambar Otomatis ke Format WebP saat Unggah (Auto Compress to WebP)
-add_filter( 'wp_handle_upload', 'cc_auto_convert_upload_to_webp' );
-function cc_auto_convert_upload_to_webp( $upload ) {
-    // Hanya proses gambar format JPEG dan PNG
-    $allowed_mimes = array( 'image/jpeg', 'image/png' );
-    if ( ! in_array( $upload['type'], $allowed_mimes, true ) ) {
-        return $upload;
-    }
-
-    $file_path = $upload['file'];
-
-    // Gunakan WordPress Image Editor API untuk konversi gambar
-    $editor = wp_get_image_editor( $file_path );
-    if ( ! is_wp_error( $editor ) ) {
-        $path_info = pathinfo( $file_path );
-        $directory = $path_info['dirname'];
-        $filename  = $path_info['filename'];
-
-        // Dapatkan nama file unik untuk file .webp
-        $webp_filename = wp_unique_filename( $directory, $filename . '.webp' );
-        $new_file_path = $directory . '/' . $webp_filename;
-
-        // Set kualitas kompresi (82 adalah sweet spot untuk ukuran file vs kualitas visual WebP)
-        $editor->set_quality( 82 );
-
-        // Simpan file baru dengan format image/webp
-        $saved = $editor->save( $new_file_path, 'image/webp' );
-
-        if ( ! is_wp_error( $saved ) ) {
-            // Hapus file JPG/PNG asli dari disk agar menghemat disk space
-            @unlink( $file_path );
-
-            // Perbarui array metadata upload agar WordPress meregistrasikan file WebP yang baru dibuat (hanya ganti nama file di ujung URL)
-            $upload['file'] = $new_file_path;
-            $upload['url']  = substr( $upload['url'], 0, -strlen( $path_info['basename'] ) ) . $webp_filename;
-            $upload['type'] = 'image/webp';
-        }
-    }
-
-    return $upload;
-}
 
 
 
