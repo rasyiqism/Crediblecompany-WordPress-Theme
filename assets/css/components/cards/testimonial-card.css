@@ -44,27 +44,42 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    background: transparent;
-    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.25);
     border-radius: 50%;
-    color: var(--gray-400, #94a3b8);
+    color: var(--gray-500, #64748b);
     text-decoration: none;
-    opacity: 0.45;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.92);
     z-index: 10;
-    transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease, color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .testimonial-card:hover .btn-card-edit-testi,
-.btn-card-edit-testi:focus-visible {
-    opacity: 0.85;
+.testimonial-card:focus-within .btn-card-edit-testi {
+    opacity: 0.9;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
 }
 
 .btn-card-edit-testi:hover,
 .btn-card-edit-testi:focus-visible {
     opacity: 1;
-    background: rgba(241, 245, 249, 0.9);
-    border-color: rgba(148, 163, 184, 0.25);
+    background: #ffffff;
+    border-color: rgba(192, 19, 20, 0.25);
     color: var(--brand-red, #c01314);
+}
+
+@media (hover: none) {
+    .btn-card-edit-testi {
+        opacity: 0.45;
+        visibility: visible;
+        pointer-events: auto;
+        transform: scale(1);
+    }
 }
 
 .single-testi-edit-wrap {
@@ -140,7 +155,6 @@
     font-size: 0.9375rem;
     color: var(--cc-testimonials-text-color, var(--brand-red));
     margin: 0 0 0.125rem 0;
-    padding-right: 1.5rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
